@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useLang } from '../../context/LanguageContext';
 import DB from '../../utils/db';
 import MaterialModal from '../../components/MaterialModal';
 
 export default function TeacherMaterials() {
+  const { t } = useLang();
   const [materials, setMaterials] = useState(DB.get('materials') || []);
   const groups = DB.get('groups') || [];
   const [topic, setTopic] = useState('');
@@ -42,7 +44,7 @@ export default function TeacherMaterials() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (type === 'file') {
-      if (!file) return alert('Файлды таңдаңыз');
+      if (!file) return alert(t('selectFile'));
       const reader = new FileReader();
       reader.onload = () => saveMaterial(file.name.split('.').pop().toLowerCase(), reader.result, file.name);
       reader.readAsDataURL(file);
@@ -59,21 +61,21 @@ export default function TeacherMaterials() {
 
   return (
     <div className="materials-section">
-      <h2>Курс материалдары</h2>
+      <h2>{t('courseMaterials')}</h2>
 
       <div className="card form-card">
-        <h3>Материал қосу</h3>
+        <h3>{t('addMaterial')}</h3>
         <form onSubmit={handleSubmit}>
-          <input type="text" placeholder="Тақырып" value={topic} onChange={(e) => setTopic(e.target.value)} required />
-          <input type="text" placeholder="Атауы" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <input type="text" placeholder={t('topic')} value={topic} onChange={(e) => setTopic(e.target.value)} required />
+          <input type="text" placeholder={t('title')} value={title} onChange={(e) => setTitle(e.target.value)} required />
           <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="pdf">PDF</option>
-            <option value="video">Бейне (YouTube embed URL)</option>
-            <option value="link">Сілтеме</option>
-            <option value="file">Компьютерден файл</option>
+            <option value="pdf">{t('typePdf')}</option>
+            <option value="video">{t('typeVideo')}</option>
+            <option value="link">{t('typeLink')}</option>
+            <option value="file">{t('typeFile')}</option>
           </select>
           {type !== 'file' ? (
-            <input type="url" placeholder="URL" value={url} onChange={(e) => setUrl(e.target.value)} required />
+            <input type="url" placeholder={t('url')} value={url} onChange={(e) => setUrl(e.target.value)} required />
           ) : (
             <div>
               <input
@@ -96,11 +98,11 @@ export default function TeacherMaterials() {
               </label>
             ))}
           </div>
-          <button type="submit" className="btn btn-primary">Қосу</button>
+          <button type="submit" className="btn btn-primary">{t('add')}</button>
         </form>
       </div>
 
-      {Object.keys(byTopic).length === 0 && <p className="empty-state">Материалдар әлі қосылмаған</p>}
+      {Object.keys(byTopic).length === 0 && <p className="empty-state">{t('noMaterials')}</p>}
 
       {Object.entries(byTopic).map(([topicName, items]) => (
         <div className="topic-group" key={topicName}>
@@ -118,9 +120,9 @@ export default function TeacherMaterials() {
                     <iframe src={m.url} allowFullScreen title={m.title} />
                   </div>
                 ) : (
-                  <button className="btn btn-sm" onClick={() => setPreviewMaterial(m)}>Ашу</button>
+                  <button className="btn btn-sm" onClick={() => setPreviewMaterial(m)}>{t('open')}</button>
                 )}
-                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(m.id)}>Жою</button>
+                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(m.id)}>{t('delete')}</button>
               </div>
             ))}
           </div>

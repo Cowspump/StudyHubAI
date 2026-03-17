@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLang } from '../../context/LanguageContext';
 import DB from '../../utils/db';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -9,10 +10,11 @@ export default function TakeTest() {
   const { testId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const test = (DB.get('tests') || []).find((t) => t.id === testId);
+  const { t } = useLang();
+  const test = (DB.get('tests') || []).find((ts) => ts.id === testId);
   const [answers, setAnswers] = useState({});
 
-  if (!test) return <p>Тест табылмады</p>;
+  if (!test) return <p>{t('testNotFound')}</p>;
 
   const total = test.questions.length;
   const answeredCount = Object.keys(answers).length;
@@ -43,7 +45,7 @@ export default function TakeTest() {
   return (
     <div className="test-taking">
       <h2>{test.title}</h2>
-      <div className="test-counter">{answeredCount} / {total} жауап берілді</div>
+      <div className="test-counter">{answeredCount} / {total} {t('answered')}</div>
       <div className="test-progress">
         <div className="test-progress-bar" style={{ width: `${(answeredCount / total) * 100}%` }} />
       </div>
@@ -74,7 +76,7 @@ export default function TakeTest() {
         ))}
 
         <div className="test-submit-area">
-          <button type="submit" className="btn btn-primary">Жіберу</button>
+          <button type="submit" className="btn btn-primary">{t('send')}</button>
         </div>
       </form>
     </div>

@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cd /Users/alikhan/PycharmProjects/TestRus/react-app && npm run build 2>&1 | tail -30)"
+      "Bash(cd /Users/alikhan/PycharmProjects/TestRus/react-app && npm run build 2>&1 | tail -30)",
+      "Bash(cd /Users/alikhan/PycharmProjects/TestRus/react-app && npm install tailwindcss @tailwindcss/vite framer-motion)",
+      "Bash(cd /Users/alikhan/PycharmProjects/TestRus/react-app && npm install tailwindcss framer-motion)",
+      "Bash(npm ls tailwindcss | head -3)",
+      "Bash(npm install @tailwindcss/postcss postcss)",
+      "Bash(npx vite build 2>&1 | tail -20)",
+      "Bash(rm -f postcss.config.js src/styles/tailwind.css && npm uninstall tailwindcss @tailwindcss/postcss postcss)",
+      "Bash(npx vite build 2>&1 | tail -10)",
+      "Bash(npx vite build 2>&1 | tail -5)",
+      "WebFetch(domain:maddys2025.ripplear.live)",
+      "Bash(npm run build 2>&1 | tail -5)"
     ]
   }
 }

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLang } from '../../context/LanguageContext';
 import DB from '../../utils/db';
 import { getApiKey } from '../../utils/openai';
 import { generateTest } from '../../utils/openai';
 
 export default function TeacherTests() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [tests, setTests] = useState(DB.get('tests') || []);
   const groups = DB.get('groups') || [];
   const results = DB.get('results') || [];
@@ -62,17 +64,17 @@ export default function TeacherTests() {
 
   const handleAiGenerate = async (e) => {
     e.preventDefault();
-    if (!aiLecture) return alert('Лекцияны таңдаңыз');
-    if (aiGroups.length === 0) return alert('Кем дегенде бір топты таңдаңыз');
-    if (!getApiKey()) return alert('OpenAI API кілтін баптаулардан енгізіңіз!');
+    if (!aiLecture) return alert(t('selectLectureWarn'));
+    if (aiGroups.length === 0) return alert(t('selectGroupWarn'));
+    if (!getApiKey()) return alert(t('noApiKeyWarn'));
 
     setAiLoading(true);
-    setAiStatus('🤖 ИИ сұрақтар жасап жатыр... Күте тұрыңыз...');
+    setAiStatus(t('aiGenerating'));
 
     try {
       const generatedQuestions = await generateTest(aiLecture, aiNumQ);
       const lecture = materials.find((m) => m.url === aiLecture);
-      const title = aiTitle || `Тест: ${lecture?.title || 'ИИ тест'}`;
+      const title = aiTitle || `${t('aiTestDefault')}`;
 
       // Store in sessionStorage and navigate to preview
       sessionStorage.setItem('previewTest', JSON.stringify({
@@ -80,7 +82,7 @@ export default function TeacherTests() {
       }));
       navigate('/teacher/tests/preview');
     } catch (err) {
-      setAiStatus(`❌ Қате: ${err.message}`);
+      setAiStatus(`${t('errorPrefix')} ${err.message}`);
     } finally {
       setAiLoading(false);
     }
@@ -88,20 +90,20 @@ export default function TeacherTests() {
 
   return (
     <div className="tests-section">
-      <h2>Тесттер мен тапсырмалар</h2>
+      <h2>{t('testsAndTasks')}</h2>
 
       {/* AI generate */}
       <div className="card form-card" style={{ borderLeft: '4px solid #8b5cf6' }}>
-        <h3>🤖 Лекциядан тест автогенерациясы (ИИ)</h3>
+        <h3>{t('aiTestGen')}</h3>
         <form onSubmit={handleAiGenerate}>
-          <label>Лекцияны таңдаңыз:</label>
+          <label>{t('selectLecture')}</label>
           <select value={aiLecture} onChange={(e) => setAiLecture(e.target.value)} required>
-            <option value="">-- Лекция таңдаңыз --</option>
+            <option value="">{t('chooseLecture')}</option>
             {materials.map((m) => (
               <option key={m.id} value={m.url}>{m.title}</option>
             ))}
           </select>
-          <label>Сұрақтар саны:</label>
+          <label>{t('questionCount')}</label>
           <select value={aiNumQ} onChange={(e) => setAiNumQ(parseInt(e.target.value))}>
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -110,12 +112,12 @@ export default function TeacherTests() {
           </select>
           <input
             type="text"
-            placeholder="Тест атауы (бос қалдырсаңыз автоматты жасалады)"
+            placeholder={t('testNameAuto')}
             value={aiTitle}
             onChange={(e) => setAiTitle(e.target.value)}
           />
           <div className="checkbox-group">
-            <label><strong>Топтар:</strong></label>
+            <label><strong>{t('groupsLabel')}</strong></label>
             {groups.map((g) => (
               <label key={g.id}>
                 <input
@@ -133,7 +135,7 @@ export default function TeacherTests() {
             disabled={aiLoading}
             style={{ background: '#8b5cf6' }}
           >
-            {aiLoading ? '⏳ Генерация...' : '🤖 Тест жасау (ИИ)'}
+            {aiLoading ? t('generating') : t('generateAI')}
           </button>
           {aiStatus && <div style={{ marginTop: 10 }}><p style={{ color: aiStatus.startsWith('❌') ? '#e74c3c' : '#8b5cf6' }}>{aiStatus}</p></div>}
         </form>
@@ -141,17 +143,17 @@ export default function TeacherTests() {
 
       {/* Manual */}
       <div className="card form-card">
-        <h3>Тестті қолмен құру</h3>
+        <h3>{t('manualCreate')}</h3>
         <form onSubmit={handleCreateTest}>
           <input
             type="text"
-            placeholder="Тест атауы"
+            placeholder={t('testName')}
             value={testTitle}
             onChange={(e) => setTestTitle(e.target.value)}
             required
           />
           <div className="checkbox-group">
-            <label><strong>Топтар:</strong></label>
+            <label><strong>{t('groupsLabel')}</strong></label>
             {groups.map((g) => (
               <label key={g.id}>
                 <input
@@ -163,13 +165,13 @@ export default function TeacherTests() {
               </label>
             ))}
           </div>
-          <h4>Сұрақтар</h4>
+          <h4>{t('questions')}</h4>
           {questions.map((q, i) => (
             <div className="question-block" key={i}>
-              <label>Сұрақ {i + 1}</label>
+              <label>{t('question')} {i + 1}</label>
               <input
                 type="text"
-                placeholder="Сұрақ мәтіні"
+                placeholder={t('questionText')}
                 value={q.q}
                 onChange={(e) => updateQuestion(i, 'q', e.target.value)}
                 required
@@ -178,51 +180,51 @@ export default function TeacherTests() {
                 <input
                   key={j}
                   type="text"
-                  placeholder={`Нұсқа ${j + 1}`}
+                  placeholder={`${t('option')} ${j + 1}`}
                   value={opt}
                   onChange={(e) => updateQuestion(i, String(j), e.target.value)}
                   required
                 />
               ))}
               <select value={q.answer} onChange={(e) => updateQuestion(i, 'answer', e.target.value)}>
-                <option value={0}>Дұрыс: Нұсқа 1</option>
-                <option value={1}>Дұрыс: Нұсқа 2</option>
-                <option value={2}>Дұрыс: Нұсқа 3</option>
-                <option value={3}>Дұрыс: Нұсқа 4</option>
+                <option value={0}>{t('correctOption1')}</option>
+                <option value={1}>{t('correctOption2')}</option>
+                <option value={2}>{t('correctOption3')}</option>
+                <option value={3}>{t('correctOption4')}</option>
               </select>
             </div>
           ))}
-          <button type="button" className="btn btn-secondary" onClick={addQuestion}>+ Сұрақ қосу</button>
-          <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>Тест құру</button>
+          <button type="button" className="btn btn-secondary" onClick={addQuestion}>{t('addQuestion')}</button>
+          <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem' }}>{t('createTest')}</button>
         </form>
       </div>
 
-      <h3>Бар тесттер</h3>
-      {tests.length === 0 && <p className="empty-state">Тесттер әлі жоқ</p>}
+      <h3>{t('existingTests')}</h3>
+      {tests.length === 0 && <p className="empty-state">{t('noTests')}</p>}
 
-      {tests.map((t) => {
-        const testResults = results.filter((r) => r.testId === t.id);
+      {tests.map((tt) => {
+        const testResults = results.filter((r) => r.testId === tt.id);
         const users = DB.get('users') || [];
         return (
-          <div className="card" key={t.id}>
+          <div className="card" key={tt.id}>
             <div className="card-header">
-              <h4>{t.title}</h4>
+              <h4>{tt.title}</h4>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn btn-sm" onClick={() => navigate(`/teacher/tests/edit/${t.id}`)} style={{ background: '#8b5cf6', color: '#fff' }}>
-                  Өңдеу
+                <button className="btn btn-sm" onClick={() => navigate(`/teacher/tests/edit/${tt.id}`)} style={{ background: '#8b5cf6', color: '#fff' }}>
+                  {t('edit')}
                 </button>
-                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(t.id)}>Жою</button>
+                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(tt.id)}>{t('delete')}</button>
               </div>
             </div>
             <p>
-              {t.questions.length} сұрақ · Топтар:{' '}
-              {t.groupIds.map((gid) => groups.find((g) => g.id === gid)?.name || gid).join(', ')}
+              {tt.questions.length} {t('questionsShort')}{' '}
+              {tt.groupIds.map((gid) => groups.find((g) => g.id === gid)?.name || gid).join(', ')}
             </p>
             {testResults.length > 0 ? (
               <details>
-                <summary>Нәтижелер ({testResults.length})</summary>
+                <summary>{t('results')} ({testResults.length})</summary>
                 <table className="results-table">
-                  <thead><tr><th>Студент</th><th>Балл</th><th>Күні</th></tr></thead>
+                  <thead><tr><th>{t('student')}</th><th>{t('score')}</th><th>{t('date')}</th></tr></thead>
                   <tbody>
                     {testResults.map((r, i) => {
                       const stu = users.find((u) => u.id === r.userId);
@@ -238,7 +240,7 @@ export default function TeacherTests() {
                 </table>
               </details>
             ) : (
-              <p className="hint">Нәтижелер әлі жоқ</p>
+              <p className="hint">{t('noResults')}</p>
             )}
           </div>
         );

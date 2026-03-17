@@ -1,8 +1,10 @@
 import { useAuth } from '../../context/AuthContext';
+import { useLang } from '../../context/LanguageContext';
 import DB from '../../utils/db';
 
 export default function StudentHome() {
   const { user } = useAuth();
+  const { t } = useLang();
   const groups = DB.get('groups') || [];
   const group = groups.find((g) => g.id === user.groupId);
   const results = (DB.get('results') || []).filter((r) => r.userId === user.id);
@@ -17,48 +19,48 @@ export default function StudentHome() {
 
   return (
     <>
-      <h2>Қош келдіңіз, {user.name.split(' ')[0]}!</h2>
+      <h2>{t('welcome')}, {user.name.split(' ')[0]}!</h2>
 
       <div className="stats-grid">
         <div className="stat-card">
           <span className="stat-num">{group?.name || '—'}</span>
-          <span className="stat-label">Топ</span>
+          <span className="stat-label">{t('group')}</span>
         </div>
         <div className="stat-card">
           <span className="stat-num">{tests.length}</span>
-          <span className="stat-label">Қолжетімді тесттер</span>
+          <span className="stat-label">{t('availableTests')}</span>
         </div>
         <div className="stat-card">
           <span className="stat-num">{results.length}</span>
-          <span className="stat-label">Тапсырылған</span>
+          <span className="stat-label">{t('submitted')}</span>
         </div>
         <div className="stat-card">
           <span className="stat-num">{avgScore}%</span>
-          <span className="stat-label">Орташа балл</span>
+          <span className="stat-label">{t('average')}</span>
         </div>
       </div>
 
       <div className="card">
-        <h3>Оқытушы туралы ақпарат</h3>
+        <h3>{t('teacherInfo')}</h3>
         {teacher ? (
           <div className="profile-info">
             <img
               src={teacher.photo || '/src/assets/placeholder.svg'}
               className="avatar-lg"
-              alt="Фото"
+              alt={t('photo')}
               style={{ width: 120, height: 150, objectFit: 'cover', borderRadius: 12 }}
             />
             <div>
               <p><strong>{teacher.name}</strong></p>
               <p>{teacher.position || ''}</p>
               <p>{teacher.bio || ''}</p>
-              <p>Email: <a href={`mailto:${teacher.email}`}>{teacher.email}</a></p>
-              <p>Телефон: {teacher.phone || '—'}</p>
-              <p>Telegram: {teacher.telegram || '—'}</p>
+              <p>{t('email')}: <a href={`mailto:${teacher.email}`}>{teacher.email}</a></p>
+              <p>{t('phone')}: {teacher.phone || '—'}</p>
+              <p>{t('telegram')}: {teacher.telegram || '—'}</p>
             </div>
           </div>
         ) : (
-          <p>Ақпарат қолжетімсіз</p>
+          <p>{t('infoUnavailable')}</p>
         )}
       </div>
     </>

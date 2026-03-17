@@ -1,15 +1,17 @@
 import { useState } from 'react';
+import { useLang } from '../../context/LanguageContext';
 import DB from '../../utils/db';
 import { transliterate, generatePassword } from '../../utils/helpers';
 
 export default function TeacherGroups() {
+  const { t } = useLang();
   const [groups, setGroups] = useState(DB.get('groups') || []);
   const [users, setUsers] = useState(DB.get('users') || []);
   const [groupName, setGroupName] = useState('');
   const [bulkGroup, setBulkGroup] = useState('');
   const [bulkNames, setBulkNames] = useState('');
   const [createdAccounts, setCreatedAccounts] = useState([]);
-  const [copyText, setCopyText] = useState('Кестені көшіру');
+  const [copyText, setCopyText] = useState(t('copyTable'));
 
   const students = users.filter((u) => u.role === 'student');
 
@@ -69,36 +71,36 @@ export default function TeacherGroups() {
   };
 
   const handleCopy = () => {
-    const text = 'Аты-жөні\tЛогин\tҚұпия сөз\n' + createdAccounts.map((c) => `${c.name}\t${c.email}\t${c.password}`).join('\n');
+    const text = t('name') + '\t' + t('loginCol') + '\t' + t('password') + '\n' + createdAccounts.map((c) => `${c.name}\t${c.email}\t${c.password}`).join('\n');
     navigator.clipboard.writeText(text).then(() => {
-      setCopyText('Көшірілді!');
-      setTimeout(() => setCopyText('Кестені көшіру'), 2000);
+      setCopyText(t('copied'));
+      setTimeout(() => setCopyText(t('copyTable')), 2000);
     });
   };
 
   return (
     <>
-      <h2>Топтарды басқару</h2>
+      <h2>{t('manageGroups')}</h2>
 
       <div className="card form-card">
-        <h3>Топ құру</h3>
+        <h3>{t('createGroup')}</h3>
         <form className="inline-form" onSubmit={handleAddGroup}>
           <input
             type="text"
-            placeholder="Топ атауы (мыс. ИС-203)"
+            placeholder={t('groupNamePlaceholder')}
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
             required
           />
-          <button type="submit" className="btn btn-primary">Құру</button>
+          <button type="submit" className="btn btn-primary">{t('create')}</button>
         </form>
       </div>
 
       <div className="card form-card">
-        <h3>Студенттерді қосу</h3>
+        <h3>{t('addStudents')}</h3>
         <form onSubmit={handleBulkAdd}>
           <select value={bulkGroup} onChange={(e) => setBulkGroup(e.target.value)} required>
-            <option value="">Топты таңдаңыз</option>
+            <option value="">{t('selectGroup')}</option>
             {groups.map((g) => (
               <option key={g.id} value={g.id}>{g.name}</option>
             ))}
@@ -107,21 +109,21 @@ export default function TeacherGroups() {
             rows={6}
             value={bulkNames}
             onChange={(e) => setBulkNames(e.target.value)}
-            placeholder={'Студенттердің аты-жөнін енгізіңіз (әр жолға бір адам):\nИванов Алексей\nПетрова Мария\nСергеев Дмитрий'}
+            placeholder={t('enterStudentNames')}
             required
           />
-          <button type="submit" className="btn btn-primary">Аккаунттарды генерациялау</button>
+          <button type="submit" className="btn btn-primary">{t('generateAccounts')}</button>
         </form>
 
         {createdAccounts.length > 0 && (
           <div style={{ marginTop: '1rem' }}>
-            <h4>Құрылған аккаунттар:</h4>
+            <h4>{t('createdAccounts')}</h4>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left', padding: 6, borderBottom: '2px solid var(--border)' }}>Аты-жөні</th>
-                  <th style={{ textAlign: 'left', padding: 6, borderBottom: '2px solid var(--border)' }}>Логин</th>
-                  <th style={{ textAlign: 'left', padding: 6, borderBottom: '2px solid var(--border)' }}>Құпия сөз</th>
+                  <th style={{ textAlign: 'left', padding: 6, borderBottom: '2px solid var(--border)' }}>{t('name')}</th>
+                  <th style={{ textAlign: 'left', padding: 6, borderBottom: '2px solid var(--border)' }}>{t('loginCol')}</th>
+                  <th style={{ textAlign: 'left', padding: 6, borderBottom: '2px solid var(--border)' }}>{t('password')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,9 +147,9 @@ export default function TeacherGroups() {
           <div className="card" key={g.id}>
             <div className="card-header">
               <h4>{g.name}</h4>
-              <button className="btn btn-danger btn-sm" onClick={() => handleDeleteGroup(g.id)}>Жою</button>
+              <button className="btn btn-danger btn-sm" onClick={() => handleDeleteGroup(g.id)}>{t('delete')}</button>
             </div>
-            <p>{groupStudents.length} студент</p>
+            <p>{groupStudents.length} {t('student')}</p>
             {groupStudents.length > 0 && (
               <ul className="student-list">
                 {groupStudents.map((s) => (
@@ -158,7 +160,7 @@ export default function TeacherGroups() {
                       onClick={() => handleDeleteStudent(s.id)}
                       style={{ marginLeft: 8, padding: '2px 8px', fontSize: '0.75rem' }}
                     >
-                      Жою
+                      {t('delete')}
                     </button>
                   </li>
                 ))}

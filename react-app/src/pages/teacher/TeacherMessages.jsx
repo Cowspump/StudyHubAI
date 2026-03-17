@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLang } from '../../context/LanguageContext';
 import DB from '../../utils/db';
 import { getInitials, formatTime, escapeHtml } from '../../utils/helpers';
 
 export default function TeacherMessages() {
   const { user } = useAuth();
+  const { t } = useLang();
   const [selectedId, setSelectedId] = useState(null);
   const [msgText, setMsgText] = useState('');
   const [, forceUpdate] = useState(0);
@@ -83,12 +85,12 @@ export default function TeacherMessages() {
 
   return (
     <div className="messages-section">
-      <h2>Хабарламалар</h2>
+      <h2>{t('messages')}</h2>
       <div className="msg-layout">
         <div className="msg-sidebar">
           {convos.length === 0 && (
             <p style={{ padding: '1rem', color: 'var(--text-muted)', textAlign: 'center', fontSize: '0.9rem' }}>
-              Хабарламалар жоқ
+              {t('noMessages')}
             </p>
           )}
           {convos.map((c) => (
@@ -115,7 +117,7 @@ export default function TeacherMessages() {
           {/* All students without conversations */}
           {students.filter((s) => !convos.find((c) => c.student.id === s.id)).length > 0 && (
             <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--border)' }}>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Барлық студенттер:</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{t('allStudents')}</p>
               {students
                 .filter((s) => !convos.find((c) => c.student.id === s.id))
                 .map((s) => (
@@ -157,18 +159,18 @@ export default function TeacherMessages() {
               <form className="msg-chat-input" onSubmit={handleSend}>
                 <input
                   type="text"
-                  placeholder="Жауап жазыңыз..."
+                  placeholder={t('writeReply')}
                   value={msgText}
                   onChange={(e) => setMsgText(e.target.value)}
                   autoComplete="off"
                   required
                 />
-                <button type="submit" className="btn btn-primary">Жіберу</button>
+                <button type="submit" className="btn btn-primary">{t('send')}</button>
               </form>
             </>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
-              Студентті таңдаңыз
+              {t('selectStudent')}
             </div>
           )}
         </div>

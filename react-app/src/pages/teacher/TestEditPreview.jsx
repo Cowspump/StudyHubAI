@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useLang } from '../../context/LanguageContext';
 import DB from '../../utils/db';
 
 export default function TestEditPreview() {
   const { testId } = useParams();
   const navigate = useNavigate();
+  const { t } = useLang();
   const [title, setTitle] = useState('');
   const [groupIds, setGroupIds] = useState([]);
   const [questions, setQuestions] = useState([]);
@@ -50,8 +52,8 @@ export default function TestEditPreview() {
   };
 
   const handleSave = () => {
-    if (questions.length === 0) return alert('Кем дегенде бір сұрақ болуы керек!');
-    if (!title.trim()) return alert('Тест атауын енгізіңіз!');
+    if (questions.length === 0) return alert(t('atLeastOneQuestion'));
+    if (!title.trim()) return alert(t('enterTestName'));
 
     const tests = DB.get('tests') || [];
 
@@ -70,21 +72,21 @@ export default function TestEditPreview() {
 
   return (
     <div className="tests-section">
-      <h2>Сұрақтарды тексеру және өңдеу</h2>
+      <h2>{t('reviewQuestions')}</h2>
       <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
-        Сұрақтарды тексеріңіз. Қажет болса мәтінді өңдеңіз, сұрақтарды жойыңыз немесе дұрыс жауапты өзгертіңіз.
+        {t('reviewDesc')}
       </p>
 
       <div className="card form-card" style={{ borderLeft: '4px solid #8b5cf6', marginBottom: '1rem' }}>
-        <label><strong>Тест атауы:</strong></label>
+        <label><strong>{t('testNameLabel')}</strong></label>
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
       </div>
 
       {questions.map((q, i) => (
         <div className="card edit-question-block" key={i} style={{ borderLeft: '4px solid #8b5cf6' }}>
           <div className="card-header">
-            <label><strong>Сұрақ {i + 1}</strong></label>
-            <button className="btn btn-danger btn-sm" onClick={() => removeQuestion(i)}>Жою</button>
+            <label><strong>{t('question')} {i + 1}</strong></label>
+            <button className="btn btn-danger btn-sm" onClick={() => removeQuestion(i)}>{t('delete')}</button>
           </div>
           <input
             type="text"
@@ -98,7 +100,7 @@ export default function TestEditPreview() {
                 type="text"
                 value={opt}
                 onChange={(e) => updateQuestion(i, String(j), e.target.value)}
-                placeholder={`Нұсқа ${j + 1}`}
+                placeholder={`${t('option')} ${j + 1}`}
               />
             ))}
           </div>
@@ -107,20 +109,20 @@ export default function TestEditPreview() {
             onChange={(e) => updateQuestion(i, 'answer', e.target.value)}
             style={{ marginTop: '0.5rem' }}
           >
-            <option value={0}>Дұрыс: Нұсқа 1</option>
-            <option value={1}>Дұрыс: Нұсқа 2</option>
-            <option value={2}>Дұрыс: Нұсқа 3</option>
-            <option value={3}>Дұрыс: Нұсқа 4</option>
+            <option value={0}>{t('correctOption1')}</option>
+            <option value={1}>{t('correctOption2')}</option>
+            <option value={2}>{t('correctOption3')}</option>
+            <option value={3}>{t('correctOption4')}</option>
           </select>
         </div>
       ))}
 
       <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
         <button className="btn btn-primary" onClick={handleSave} style={{ background: '#8b5cf6' }}>
-          Тестті сақтау
+          {t('saveTest')}
         </button>
         <button className="btn btn-secondary" onClick={() => navigate('/teacher/tests')}>
-          Бас тарту
+          {t('cancel')}
         </button>
       </div>
     </div>

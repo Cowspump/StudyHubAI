@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useLang } from '../context/LanguageContext';
 
 export default function MaterialModal({ material, onClose }) {
+  const { t } = useLang();
   const [blobUrl, setBlobUrl] = useState(null);
 
   const { url, title, type } = material;
@@ -28,11 +30,11 @@ export default function MaterialModal({ material, onClose }) {
   const viewUrl = blobUrl || url;
 
   const extInfo = {
-    ppt: { icon: '📊', label: 'PowerPoint презентация' },
-    pptx: { icon: '📊', label: 'PowerPoint презентация' },
-    doc: { icon: '📝', label: 'Word құжат' },
-    docx: { icon: '📝', label: 'Word құжат' },
-    pdf: { icon: '📄', label: 'PDF файл' },
+    ppt: { icon: '📊', label: t('pptPresentation') },
+    pptx: { icon: '📊', label: t('pptPresentation') },
+    doc: { icon: '📝', label: t('wordDoc') },
+    docx: { icon: '📝', label: t('wordDoc') },
+    pdf: { icon: '📄', label: t('pdfFile') },
   };
   const info = extInfo[ext] || { icon: '📁', label: ext.toUpperCase() };
 
@@ -57,10 +59,10 @@ export default function MaterialModal({ material, onClose }) {
             <strong style={{ fontSize: '1.1rem' }}>{title}</strong>
             <div>
               <a href={viewUrl} download={`${title}.${ext}`} className="btn btn-sm" style={{ marginRight: 8 }}>
-                ⬇ Жүктеу
+                {t('download')}
               </a>
               <button className="btn btn-sm" onClick={onClose} style={{ background: '#e74c3c', color: '#fff' }}>
-                ✕ Жабу
+                {t('closeModal')}
               </button>
             </div>
           </div>
@@ -79,10 +81,10 @@ export default function MaterialModal({ material, onClose }) {
           <p style={{ color: '#666', margin: '0 0 4px' }}>{info.label}</p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24 }}>
             <a href={viewUrl} download={title} className="btn btn-primary" style={{ padding: '10px 24px', textDecoration: 'none' }}>
-              ⬇ Файлды жүктеу
+              {t('downloadFile')}
             </a>
             <button onClick={onClose} className="btn" style={{ padding: '10px 24px', background: '#e74c3c', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
-              ✕ Жабу
+              {t('closeModal')}
             </button>
           </div>
         </div>

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLang } from '../../context/LanguageContext';
 import DB from '../../utils/db';
 import MaterialModal from '../../components/MaterialModal';
 
 export default function StudentMaterials() {
   const { user } = useAuth();
+  const { t } = useLang();
   const materials = (DB.get('materials') || []).filter((m) => m.groupIds.includes(user.groupId));
   const [previewMaterial, setPreviewMaterial] = useState(null);
 
@@ -18,9 +20,9 @@ export default function StudentMaterials() {
 
   return (
     <div className="materials-section">
-      <h2>Курс материалдары</h2>
+      <h2>{t('courseMaterials')}</h2>
 
-      {Object.keys(byTopic).length === 0 && <p className="empty-state">Материалдар әлі қосылмаған</p>}
+      {Object.keys(byTopic).length === 0 && <p className="empty-state">{t('noMaterials')}</p>}
 
       {Object.entries(byTopic).map(([topicName, items]) => (
         <div className="topic-group" key={topicName}>
@@ -38,7 +40,7 @@ export default function StudentMaterials() {
                     <iframe src={m.url} allowFullScreen title={m.title} />
                   </div>
                 ) : (
-                  <button className="btn btn-sm" onClick={() => setPreviewMaterial(m)}>Ашу</button>
+                  <button className="btn btn-sm" onClick={() => setPreviewMaterial(m)}>{t('open')}</button>
                 )}
               </div>
             ))}

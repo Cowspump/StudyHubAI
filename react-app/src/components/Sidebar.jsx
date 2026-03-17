@@ -1,7 +1,9 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLang } from '../context/LanguageContext';
 import { getInitials } from '../utils/helpers';
 import DB from '../utils/db';
+import LanguageSwitcher from './LanguageSwitcher';
 
 function getUnreadCount(userId) {
   const msgs = DB.get('messages') || [];
@@ -10,6 +12,7 @@ function getUnreadCount(userId) {
 
 export default function Sidebar({ links }) {
   const { user, logout } = useAuth();
+  const { t } = useLang();
   const unread = getUnreadCount(user.id);
   const groups = DB.get('groups') || [];
   const group = groups.find((g) => g.id === user.groupId);
@@ -21,7 +24,7 @@ export default function Sidebar({ links }) {
           <img
             src={user.photo}
             className="avatar"
-            alt="Фото"
+            alt={t('photo')}
             style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: '50%' }}
           />
         ) : (
@@ -29,9 +32,11 @@ export default function Sidebar({ links }) {
         )}
         <h3>{user.name}</h3>
         <p className={`role-badge ${user.role === 'student' ? 'student-badge' : ''}`}>
-          {user.role === 'teacher' ? 'Оқытушы' : group?.name || 'Студент'}
+          {user.role === 'teacher' ? t('teacher') : group?.name || t('student')}
         </p>
       </div>
+
+      <LanguageSwitcher />
 
       <nav className="sidebar-nav">
         {links.map((link) => (
@@ -61,7 +66,7 @@ export default function Sidebar({ links }) {
       </nav>
 
       <button className="btn btn-logout" onClick={logout}>
-        Шығу
+        {t('logout')}
       </button>
     </aside>
   );

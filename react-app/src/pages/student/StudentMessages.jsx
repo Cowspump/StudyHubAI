@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLang } from '../../context/LanguageContext';
 import DB from '../../utils/db';
 import { formatTime } from '../../utils/helpers';
 
 export default function StudentMessages() {
   const { user } = useAuth();
+  const { t } = useLang();
   const [msgText, setMsgText] = useState('');
   const [, forceUpdate] = useState(0);
   const chatRef = useRef(null);
@@ -41,7 +43,7 @@ export default function StudentMessages() {
     chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
   }, [chatMsgs.length]);
 
-  if (!teacher) return <p>Оқытушы табылмады</p>;
+  if (!teacher) return <p>{t('teacherNotFound')}</p>;
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -62,7 +64,7 @@ export default function StudentMessages() {
 
   return (
     <div className="messages-section">
-      <h2>Хабарламалар</h2>
+      <h2>{t('messages')}</h2>
       <div className="msg-chat-box" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius)', height: 520, boxShadow: 'var(--shadow)', background: 'var(--surface)' }}>
         <div className="msg-chat-header">
           <img
@@ -72,14 +74,14 @@ export default function StudentMessages() {
           />
           <div>
             <strong>{teacher.name}</strong>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>Оқытушы</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{t('teacherLabel')}</p>
           </div>
         </div>
 
         <div className="msg-chat-messages" ref={chatRef}>
           {chatMsgs.length === 0 && (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
-              Хабарлама жоқ. Оқытушыға жазыңыз!
+              {t('noMessagesStudent')}
             </p>
           )}
           {chatMsgs.map((m) => (
@@ -93,13 +95,13 @@ export default function StudentMessages() {
         <form className="msg-chat-input" onSubmit={handleSend}>
           <input
             type="text"
-            placeholder="Хабарлама жазыңыз..."
+            placeholder={t('writeMessage')}
             value={msgText}
             onChange={(e) => setMsgText(e.target.value)}
             autoComplete="off"
             required
           />
-          <button type="submit" className="btn btn-primary">Жіберу</button>
+          <button type="submit" className="btn btn-primary">{t('send')}</button>
         </form>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLang } from '../../context/LanguageContext';
 import DB from '../../utils/db';
 import { explainAnswer } from '../../utils/openai';
 
@@ -10,7 +11,8 @@ export default function TestResults() {
   const { testId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const test = (DB.get('tests') || []).find((t) => t.id === testId);
+  const { t } = useLang();
+  const test = (DB.get('tests') || []).find((ts) => ts.id === testId);
   const results = DB.get('results') || [];
   const myResult = results.filter((r) => r.testId === testId && r.userId === user.id).pop();
 
@@ -20,8 +22,8 @@ export default function TestResults() {
   if (!test || !myResult?.answers) {
     return (
       <div className="test-taking">
-        <p>Нәтиже табылмады</p>
-        <button className="btn btn-primary" onClick={() => navigate('/student/tests')}>← Тесттерге оралу</button>
+        <p>{t('resultNotFound')}</p>
+        <button className="btn btn-primary" onClick={() => navigate('/student/tests')}>{t('backToTests')}</button>
       </div>
     );
   }
@@ -48,13 +50,13 @@ export default function TestResults() {
     <div className="test-taking">
       <div className="result-banner" style={{ borderTop: `4px solid ${color}` }}>
         <div className="result-score" style={{ color }}>{pct}%</div>
-        <div className="result-fraction">{score} / {total} дұрыс жауап</div>
+        <div className="result-fraction">{score} / {total} {t('correctAnswer')}</div>
         <div className="result-message">
-          {pct >= 70 ? '🎉 Жарайсың!' : pct >= 50 ? '📚 Жақсы, бірақ жақсарту қажет' : '⚠️ Материалды қайта оқу ұсынылады'}
+          {pct >= 70 ? t('resultGreat') : pct >= 50 ? t('resultGood') : t('resultBad')}
         </div>
       </div>
 
-      <h3 style={{ marginBottom: '1rem' }}>Сұрақтарды талдау</h3>
+      <h3 style={{ marginBottom: '1rem' }}>{t('analyzeQuestions')}</h3>
 
       {test.questions.map((q, i) => {
         const userAns = userAnswers[i];
@@ -101,12 +103,12 @@ export default function TestResults() {
                     disabled={loadingIdx === i}
                     style={{ background: '#8b5cf6', color: '#fff' }}
                   >
-                    {loadingIdx === i ? '⏳ ИИ ойлануда...' : '🤖 Неліктен? (ИИ түсіндірсін)'}
+                    {loadingIdx === i ? t('aiThinking') : t('aiExplain')}
                   </button>
                 )}
                 {explanations[i] && (
                   <div style={{ background: '#f3f0ff', borderRadius: 8, padding: 12, border: '1px solid #ddd6fe' }}>
-                    <strong>🤖 ИИ түсіндірмесі:</strong>
+                    <strong>{t('aiExplanation')}</strong>
                     <p style={{ margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>{explanations[i]}</p>
                   </div>
                 )}
@@ -117,7 +119,7 @@ export default function TestResults() {
       })}
 
       <div className="test-submit-area">
-        <button className="btn btn-primary" onClick={() => navigate('/student/tests')}>← Тесттерге оралу</button>
+        <button className="btn btn-primary" onClick={() => navigate('/student/tests')}>{t('backToTests')}</button>
       </div>
     </div>
   );

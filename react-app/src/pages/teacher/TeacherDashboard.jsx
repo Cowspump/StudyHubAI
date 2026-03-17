@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
+import { useLang } from '../../context/LanguageContext';
 import TeacherHome from './TeacherHome';
 import TeacherGroups from './TeacherGroups';
 import TeacherMaterials from './TeacherMaterials';
@@ -7,15 +8,16 @@ import TeacherTests from './TeacherTests';
 import TeacherMessages from './TeacherMessages';
 import TestEditPreview from './TestEditPreview';
 
-const links = [
-  { to: '/teacher', label: 'Басты бет', end: true },
-  { to: '/teacher/groups', label: 'Топтар' },
-  { to: '/teacher/materials', label: 'Материалдар' },
-  { to: '/teacher/tests', label: 'Тесттер' },
-  { to: '/teacher/messages', label: 'Хабарламалар', showUnread: true },
-];
-
 export default function TeacherDashboard() {
+  const { t } = useLang();
+  const links = [
+    { to: '/teacher', label: t('navHome'), end: true },
+    { to: '/teacher/groups', label: t('navGroups') },
+    { to: '/teacher/materials', label: t('navMaterials') },
+    { to: '/teacher/tests', label: t('navTests') },
+    { to: '/teacher/messages', label: t('navMessages'), showUnread: true },
+  ];
+
   return (
     <div className="dashboard">
       <Sidebar links={links} />

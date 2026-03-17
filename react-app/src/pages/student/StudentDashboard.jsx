@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
+import { useLang } from '../../context/LanguageContext';
 import StudentHome from './StudentHome';
 import StudentMaterials from './StudentMaterials';
 import StudentTests from './StudentTests';
@@ -8,15 +9,16 @@ import StudentMessages from './StudentMessages';
 import TakeTest from './TakeTest';
 import TestResults from './TestResults';
 
-const links = [
-  { to: '/student', label: 'Басты бет', end: true },
-  { to: '/student/materials', label: 'Материалдар' },
-  { to: '/student/tests', label: 'Тесттер' },
-  { to: '/student/ai', label: 'ИИ-көмекші' },
-  { to: '/student/messages', label: 'Хабарламалар', showUnread: true },
-];
-
 export default function StudentDashboard() {
+  const { t } = useLang();
+  const links = [
+    { to: '/student', label: t('navHome'), end: true },
+    { to: '/student/materials', label: t('navMaterials') },
+    { to: '/student/tests', label: t('navTests') },
+    { to: '/student/ai', label: t('navAI') },
+    { to: '/student/messages', label: t('navMessages'), showUnread: true },
+  ];
+
   return (
     <div className="dashboard">
       <Sidebar links={links} />

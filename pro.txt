@@ -1,51 +1,38 @@
-Role: Ты — Senior Frontend Engineer, специализирующийся на миграции legacy-кода (Vanilla JS) на современный стек React.
+Role: You are a Senior Frontend Architect and Conversion Copywriter. Your goal is to design and code a high-converting landing page for a new EdTech platform.
 
-Task: Перепиши проект из Vanilla HTML/CSS/JS в современное React-приложение с полным сохранением текущего функционала и дизайна.
+Project Vision:
+A web application that bridges the gap between students and teachers for out-of-school learning. The platform allows teachers to host materials (Video, PDF, Links), manage groups, and use AI to generate tests from lectures. It features deep analytics on student performance and direct communication.
 
+Technical Requirements:
 
-проект находится по директории /Users/alikhan/PycharmProjects/for_some_students/frontend
-Technical Stack:
+Tech Stack: React (Vite), Tailwind CSS, Framer Motion (for smooth animations), and a component library like Shadcn/UI or Radix UI.
 
+Best Practices: Use functional components, clean folder structure, responsive design (mobile-first), and accessible (a11y) UI elements.
 
+Visual Style: High-end tech startup aesthetic. Clean typography, subtle gradients, and a "premium" feel that builds trust with educational institutions.
 
-Framework: React 18+ (Functional Components, Hooks).
+Page Structure & Content:
 
-Build Tool: Vite.
+Navigation Bar: Sticky, glassmorphism effect, logo on the left, "Features", "Pricing", "About" links in the center, and "Login/Sign Up" buttons on the right.
 
-Styling: [Укажи: Tailwind CSS / CSS Modules / Styled Components]. По умолчанию используй чистый CSS, если не указано иное.
+Hero Section: A powerful headline that highlights the "Ease of Learning Beyond the Classroom." Include a clear Call to Action (CTA) and a visual placeholder for a dashboard preview.
 
-Icons: Lucide-React (если в проекте есть иконки).
+Features Grid (The Core): * For Teachers: AI-powered test generation, group management, material hosting (Video/PDF), and real-time student support.
 
-Project Context:
+For Students: Direct access to tutors, personalized progress tracking, and a competitive Leaderboard for top performers.
 
-Ниже приведен исходный код текущего приложения:
+Analytics & Support Section: Highlight the teacher's ability to see who needs help and individual student results in real-time.
 
---- index.html ---[ВСТАВЬ КОД HTML ЗДЕСЬ]
+Pricing Table: Three distinct tiers (e.g., Basic, Pro, Institution). Each tier should clearly list its value proposition.
 
---- style.css ---[ВСТАВЬ КОД CSS ЗДЕСЬ]
+Footer: Standard links, social icons, and newsletter signup.
 
---- script.js ---[ВСТАВЬ КОД JS ЗДЕСЬ]
+Your Task:
 
-Requirements:
+Write the React code for this landing page.
 
+Use Lucide-react for icons.
 
+Ensure the copy is persuasive and "sells" the solution to potential buyers (school administrators or private tutors).
 
-Component Architecture: Раздели интерфейс на логические переиспользуемые компоненты (например, Header, Footer, Card, Modal).
-
-State Management: Используй useState и useEffect для управления состоянием и DOM-манипуляциями, которые раньше делались через document.querySelector.
-
-Asset Handling: Если в HTML есть пути к картинкам, замени их на импорты в React.
-
-Clean Code: Используй современный синтаксис (Destructuring, Optional Chaining).
-
-Feature Parity: Убедись, что все обработчики событий (onClick, onSubmit и т.д.) работают точно так же, как в оригинале.
-
-Output: Выдай структуру файлов проекта и код для каждого файла.
-
-Несколько советов для лучшего результата:
-
-Используй Vite: Если Claude предложит create-react-app, лучше попроси переделать под Vite, так как он быстрее и актуальнее для разработки в PyCharm.
-
-Разделяй и властвуй: Если проект очень большой, не кидай всё сразу. Сначала попроси Claude проанализировать функционал, а потом генерировать компоненты по одному.
-
-Стили: Если в твоем проекте много кастомного CSS, уточни: "Keep the original CSS as a global file or convert it to CSS Modules".
+Make sure the layout is modular so I can easily integrate a backend later.
