@@ -1,0 +1,172 @@
+import { useState } from 'react';
+import DB from '../../utils/db';
+import { transliterate, generatePassword } from '../../utils/helpers';
+
+export default function TeacherGroups() {
+  const [groups, setGroups] = useState(DB.get('groups') || []);
+  const [users, setUsers] = useState(DB.get('users') || []);
+  const [groupName, setGroupName] = useState('');
+  const [bulkGroup, setBulkGroup] = useState('');
+  const [bulkNames, setBulkNames] = useState('');
+  const [createdAccounts, setCreatedAccounts] = useState([]);
+  const [copyText, setCopyText] = useState('Кестені көшіру');
+
+  const students = users.filter((u) => u.role === 'student');
+
+  const handleAddGroup = (e) => {
+    e.preventDefault();
+    const updated = [...groups, { id: 'g' + DB.generateId(), name: groupName, createdAt: Date.now() }];
+    DB.set('groups', updated);
+    setGroups(updated);
+    setGroupName('');
+  };
+
+  const handleDeleteGroup = (id) => {
+    const updated = groups.filter((g) => g.id !== id);
+    DB.set('groups', updated);
+    setGroups(updated);
+  };
+
+  const handleDeleteStudent = (id) => {
+    const updated = users.filter((u) => u.id !== id);
+    DB.set('users', updated);
+    setUsers(updated);
+  };
+
+  const handleBulkAdd = (e) => {
+    e.preventDefault();
+    if (!bulkGroup || !bulkNames.trim()) return;
+
+    const names = bulkNames.split('\n').map((n) => n.trim()).filter((n) => n.length > 0);
+    if (names.length === 0) return;
+
+    const updatedUsers = [...users];
+    const created = [];
+
+    names.forEach((name) => {
+      const translitName = transliterate(name.split(/\s+/).slice(0, 2).join('.')).toLowerCase();
+      let email = translitName + '@student.edu';
+      let suffix = 1;
+      while (updatedUsers.find((u) => u.email === email)) {
+        email = translitName + suffix + '@student.edu';
+        suffix++;
+      }
+      const password = generatePassword();
+      const newUser = {
+        id: 'stu-' + DB.generateId(),
+        email, password, name,
+        role: 'student',
+        groupId: bulkGroup,
+      };
+      updatedUsers.push(newUser);
+      created.push({ name, email, password });
+    });
+
+    DB.set('users', updatedUsers);
+    setUsers(updatedUsers);
+    setCreatedAccounts(created);
+    setBulkNames('');
+  };
+
+  const handleCopy = () => {
+    const text = 'Аты-жөні\tЛогин\tҚұпия сөз\n' + createdAccounts.map((c) => `${c.name}\t${c.email}\t${c.password}`).join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyText('Көшірілді!');
+      setTimeout(() => setCopyText('Кестені көшіру'), 2000);
+    });
+  };
+
+  return (
+    <>
+      <h2>Топтарды басқару</h2>
+
+      <div className="card form-card">
+        <h3>Топ құру</h3>
+        <form className="inline-form" onSubmit={handleAddGroup}>
+          <input
+            type="text"
+            placeholder="Топ атауы (мыс. ИС-203)"
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+            required
+          />
+          <button type="submit" className="btn btn-primary">Құру</button>
+        </form>
+      </div>
+
+      <div className="card form-card">
+        <h3>Студенттерді қосу</h3>
+        <form onSubmit={handleBulkAdd}>
+          <select value={bulkGroup} onChange={(e) => setBulkGroup(e.target.value)} required>
+            <option value="">Топты таңдаңыз</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+          </select>
+          <textarea
+            rows={6}
+            value={bulkNames}
+            onChange={(e) => setBulkNames(e.target.value)}
+            placeholder={'Студенттердің аты-жөнін енгізіңіз (әр жолға бір адам):\nИванов Алексей\nПетрова Мария\nСергеев Дмитрий'}
+            required
+          />
+          <button type="submit" className="btn btn-primary">Аккаунттарды генерациялау</button>
+        </form>
+
+        {createdAccounts.length > 0 && (
+          <div style={{ marginTop: '1rem' }}>
+            <h4>Құрылған аккаунттар:</h4>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', padding: 6, borderBottom: '2px solid var(--border)' }}>Аты-жөні</th>
+                  <th style={{ textAlign: 'left', padding: 6, borderBottom: '2px solid var(--border)' }}>Логин</th>
+                  <th style={{ textAlign: 'left', padding: 6, borderBottom: '2px solid var(--border)' }}>Құпия сөз</th>
+                </tr>
+              </thead>
+              <tbody>
+                {createdAccounts.map((c, i) => (
+                  <tr key={i}>
+                    <td style={{ padding: 6, borderBottom: '1px solid var(--border)' }}>{c.name}</td>
+                    <td style={{ padding: 6, borderBottom: '1px solid var(--border)' }}>{c.email}</td>
+                    <td style={{ padding: 6, borderBottom: '1px solid var(--border)', fontFamily: 'monospace' }}>{c.password}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button className="btn btn-sm" onClick={handleCopy} style={{ marginTop: '0.75rem' }}>{copyText}</button>
+          </div>
+        )}
+      </div>
+
+      {groups.map((g) => {
+        const groupStudents = students.filter((s) => s.groupId === g.id);
+        return (
+          <div className="card" key={g.id}>
+            <div className="card-header">
+              <h4>{g.name}</h4>
+              <button className="btn btn-danger btn-sm" onClick={() => handleDeleteGroup(g.id)}>Жою</button>
+            </div>
+            <p>{groupStudents.length} студент</p>
+            {groupStudents.length > 0 && (
+              <ul className="student-list">
+                {groupStudents.map((s) => (
+                  <li key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {s.name} ({s.email})
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDeleteStudent(s.id)}
+                      style={{ marginLeft: 8, padding: '2px 8px', fontSize: '0.75rem' }}
+                    >
+                      Жою
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
+}

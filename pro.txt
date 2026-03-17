@@ -1,0 +1,51 @@
+Role: Ты — Senior Frontend Engineer, специализирующийся на миграции legacy-кода (Vanilla JS) на современный стек React.
+
+Task: Перепиши проект из Vanilla HTML/CSS/JS в современное React-приложение с полным сохранением текущего функционала и дизайна.
+
+
+проект находится по директории /Users/alikhan/PycharmProjects/for_some_students/frontend
+Technical Stack:
+
+
+
+Framework: React 18+ (Functional Components, Hooks).
+
+Build Tool: Vite.
+
+Styling: [Укажи: Tailwind CSS / CSS Modules / Styled Components]. По умолчанию используй чистый CSS, если не указано иное.
+
+Icons: Lucide-React (если в проекте есть иконки).
+
+Project Context:
+
+Ниже приведен исходный код текущего приложения:
+
+--- index.html ---[ВСТАВЬ КОД HTML ЗДЕСЬ]
+
+--- style.css ---[ВСТАВЬ КОД CSS ЗДЕСЬ]
+
+--- script.js ---[ВСТАВЬ КОД JS ЗДЕСЬ]
+
+Requirements:
+
+
+
+Component Architecture: Раздели интерфейс на логические переиспользуемые компоненты (например, Header, Footer, Card, Modal).
+
+State Management: Используй useState и useEffect для управления состоянием и DOM-манипуляциями, которые раньше делались через document.querySelector.
+
+Asset Handling: Если в HTML есть пути к картинкам, замени их на импорты в React.
+
+Clean Code: Используй современный синтаксис (Destructuring, Optional Chaining).
+
+Feature Parity: Убедись, что все обработчики событий (onClick, onSubmit и т.д.) работают точно так же, как в оригинале.
+
+Output: Выдай структуру файлов проекта и код для каждого файла.
+
+Несколько советов для лучшего результата:
+
+Используй Vite: Если Claude предложит create-react-app, лучше попроси переделать под Vite, так как он быстрее и актуальнее для разработки в PyCharm.
+
+Разделяй и властвуй: Если проект очень большой, не кидай всё сразу. Сначала попроси Claude проанализировать функционал, а потом генерировать компоненты по одному.
+
+Стили: Если в твоем проекте много кастомного CSS, уточни: "Keep the original CSS as a global file or convert it to CSS Modules".
