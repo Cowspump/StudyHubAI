@@ -178,6 +178,11 @@
 
 .ld-mobile-menu.open { display: flex; }
 
+.ld-mobile-menu .lang-switcher {
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
 .ld-mobile-menu a {
   font-size: 1rem;
   font-weight: 500;

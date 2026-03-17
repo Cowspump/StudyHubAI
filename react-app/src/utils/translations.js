@@ -136,7 +136,7 @@ export const translations = {
     navGroups: 'Топтар',
     navMaterials: 'Материалдар',
     navTests: 'Тесттер',
-    navMessages: 'Хабарламалар',
+    navMessages: 'Кері байланыс',
     navAI: 'ИИ-көмекші',
 
     // Teacher Home

@@ -243,6 +243,7 @@ function Navbar({ onLogin, onSignup }) {
       </div>
 
       <div className={`ld-mobile-menu ${open ? 'open' : ''}`}>
+        <LanguageSwitcher />
         <a href="#features" onClick={() => setOpen(false)}>{t('navFeatures')}</a>
         <a href="#pricing" onClick={() => setOpen(false)}>{t('navPricing')}</a>
         <a href="#about" onClick={() => setOpen(false)}>{t('navAbout')}</a>
