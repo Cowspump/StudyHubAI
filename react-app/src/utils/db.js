@@ -36,6 +36,13 @@ const DB = {
           bio: 'Ақтөбе көлік, байланыс және жаңа технологиялар колледжінің арнайы пән оқытушысы. «Үздік педагог — 2019» республикалық байқауының техникалық және кәсіби білім беру саласы бойынша жеңімпазы. «Ы.Алтынсарин» төс белгісінің иегері.',
           photo: '/src/assets/professor.jpg',
         },
+        {
+          id: 'admin-1',
+          email: 'admin@studyhubai.kz',
+          password: 'superadmin123',
+          name: 'Super Admin',
+          role: 'superadmin',
+        },
       ]);
     }
     if (!this.get('groups')) {

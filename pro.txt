@@ -1,38 +1,26 @@
-Role: You are a Senior Frontend Architect and Conversion Copywriter. Your goal is to design and code a high-converting landing page for a new EdTech platform.
+Этот вариант лучше всего подходит для генерации структуры всего приложения и ключевых компонентов.
 
-Project Vision:
-A web application that bridges the gap between students and teachers for out-of-school learning. The platform allows teachers to host materials (Video, PDF, Links), manage groups, and use AI to generate tests from lectures. It features deep analytics on student performance and direct communication.
+Промпт:
+"Действуй как Senior Fullstack Developer и Lead UI/UX Designer. Мне нужно спроектировать админ-панель для платформы StudyHubAI.
 
-Technical Requirements:
+Цель: Создать интерфейс управления для суперадмина, который контролирует преподавателей и их финансовые показатели.
 
-Tech Stack: React (Vite), Tailwind CSS, Framer Motion (for smooth animations), and a component library like Shadcn/UI or Radix UI.
+Основные функции:
 
-Best Practices: Use functional components, clean folder structure, responsive design (mobile-first), and accessible (a11y) UI elements.
+User Management: Создание/редактирование аккаунтов преподавателей (RBAC).
 
-Visual Style: High-end tech startup aesthetic. Clean typography, subtle gradients, and a "premium" feel that builds trust with educational institutions.
+Group & Student Tracking: Просмотр групп, созданных преподавателями, и списков их студентов.
 
-Page Structure & Content:
+Billing Dashboard: Детальная статистика по каждому преподавателю (кол-во студентов, активные часы, используемый функционал) для формирования счетов.
 
-Navigation Bar: Sticky, glassmorphism effect, logo on the left, "Features", "Pricing", "About" links in the center, and "Login/Sign Up" buttons on the right.
+Технические требования:
 
-Hero Section: A powerful headline that highlights the "Ease of Learning Beyond the Classroom." Include a clear Call to Action (CTA) and a visual placeholder for a dashboard preview.
+Stack: React (v18+), TypeScript, Tailwind CSS.
 
-Features Grid (The Core): * For Teachers: AI-powered test generation, group management, material hosting (Video/PDF), and real-time student support.
+Best Practices: Использование декомпозиции компонентов, кастомных хуков для логики, архитектуры типа Feature-Sliced Design (FSD).
 
-For Students: Direct access to tutors, personalized progress tracking, and a competitive Leaderboard for top performers.
+UI/UX: Дизайн в стиле 'Modern SaaS' (минимализм, качественная типографика, много 'воздуха', мягкие тени). Визуально панель должна выглядеть дороже и технологичнее, чем текущая главная страница.
 
-Analytics & Support Section: Highlight the teacher's ability to see who needs help and individual student results in real-time.
+Components: Использование современных библиотек (например, Shadcn/UI или Radix UI) для интерактивных элементов.
 
-Pricing Table: Three distinct tiers (e.g., Basic, Pro, Institution). Each tier should clearly list its value proposition.
-
-Footer: Standard links, social icons, and newsletter signup.
-
-Your Task:
-
-Write the React code for this landing page.
-
-Use Lucide-react for icons.
-
-Ensure the copy is persuasive and "sells" the solution to potential buyers (school administrators or private tutors).
-
-Make sure the layout is modular so I can easily integrate a backend later.
+Сгенерируй структуру папок проекта и пример кода для страницы 'Teacher Analytics' с использованием Recharts для визуализации статистики."

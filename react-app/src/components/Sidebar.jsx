@@ -10,10 +10,16 @@ function getUnreadCount(userId) {
   return msgs.filter((m) => m.toId === userId && !m.read).length;
 }
 
-export default function Sidebar({ links }) {
-  const { user, logout } = useAuth();
+export default function Sidebar({ links, adminUser, onAdminLogout }) {
+  const auth = useAuth();
   const { t } = useLang();
-  const unread = getUnreadCount(user.id);
+
+  // Admin mode — отдельная сессия, не зависит от AuthContext
+  const isAdmin = !!adminUser;
+  const user = isAdmin ? adminUser : auth.user;
+  const handleLogout = isAdmin ? onAdminLogout : auth.logout;
+
+  const unread = isAdmin ? 0 : getUnreadCount(user.id);
   const groups = DB.get('groups') || [];
   const group = groups.find((g) => g.id === user.groupId);
 
@@ -31,8 +37,8 @@ export default function Sidebar({ links }) {
           <div className="avatar-initials">{getInitials(user.name)}</div>
         )}
         <h3>{user.name}</h3>
-        <p className={`role-badge ${user.role === 'student' ? 'student-badge' : ''}`}>
-          {user.role === 'teacher' ? t('teacher') : group?.name || t('student')}
+        <p className={`role-badge ${user.role === 'student' ? 'student-badge' : ''} ${user.role === 'superadmin' ? 'admin-badge' : ''}`}>
+          {user.role === 'superadmin' ? t('superadmin') : user.role === 'teacher' ? t('teacher') : group?.name || t('student')}
         </p>
       </div>
 
@@ -65,7 +71,7 @@ export default function Sidebar({ links }) {
         ))}
       </nav>
 
-      <button className="btn btn-logout" onClick={logout}>
+      <button className="btn btn-logout" onClick={handleLogout}>
         {t('logout')}
       </button>
     </aside>

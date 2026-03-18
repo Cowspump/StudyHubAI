@@ -11,7 +11,28 @@
       "Bash(npx vite build 2>&1 | tail -10)",
       "Bash(npx vite build 2>&1 | tail -5)",
       "WebFetch(domain:maddys2025.ripplear.live)",
-      "Bash(npm run build 2>&1 | tail -5)"
+      "Bash(npm run build 2>&1 | tail -5)",
+      "Bash(grep -r \"sqlalchemy\\\\|ORM\\\\|alembic\\\\|migration\" /Users/alikhan/PycharmProjects/TestRus/backend --include=\"*.py\" --include=\"*.txt\" --include=\"*.toml\" 2>/dev/null | head -20)",
+      "Bash(cd /Users/alikhan/PycharmProjects/TestRus/backend && pip install alembic sqlalchemy[asyncio] asyncpg 2>&1 | tail -5)",
+      "Bash(alembic init alembic 2>&1)",
+      "Bash(alembic revision --autogenerate -m \"initial_tables\" 2>&1)",
+      "Bash(alembic revision --autogenerate -m \"initial_tables\" --sql 2>&1 | head -50)",
+      "Bash(alembic revision -m \"initial_tables\" 2>&1)",
+      "Bash(python -c \"\nimport ast, sys, pathlib\n\nerrors = []\nfor p in pathlib.Path\\('app'\\).rglob\\('*.py'\\):\n    try:\n        ast.parse\\(p.read_text\\(\\)\\)\n    except SyntaxError as e:\n        errors.append\\(f'{p}: {e}'\\)\n\nfor p in pathlib.Path\\('alembic'\\).rglob\\('*.py'\\):\n    try:\n        ast.parse\\(p.read_text\\(\\)\\)\n    except SyntaxError as e:\n        errors.append\\(f'{p}: {e}'\\)\n\nif errors:\n    for e in errors:\n        print\\(e, file=sys.stderr\\)\n    sys.exit\\(1\\)\nelse:\n    print\\('All files parse OK'\\)\n\")",
+      "Bash(python -c \"from app.models import Base, User, EmailVerificationToken; print\\('Models OK:', Base.metadata.tables.keys\\(\\)\\)\")",
+      "Bash(python -c \"from app.db.session import engine, async_session_maker, get_session, check_db_health; print\\('Session OK'\\)\")",
+      "Bash(python -c \"from app.main import app; print\\('App OK, routes:', [r.path for r in app.routes]\\)\")",
+      "Bash(PGPASSWORD=studyhubai_password psql -h localhost -p 5432 -U studyhubai -d studyhubai -c \"\\\\dt\" 2>&1)",
+      "Bash(docker volume ls 2>&1)",
+      "Bash(which psql 2>&1 && psql --version 2>&1)",
+      "Bash(pg_isready -h localhost -p 5432 2>&1)",
+      "Bash(psql -h localhost -p 5432 -U postgres -c \"SELECT 1\" 2>&1)",
+      "Bash(psql -h localhost -p 5432 -U postgres -c \"SELECT 1 FROM pg_roles WHERE rolname='studyhubai'\" 2>&1)",
+      "Bash(git commit -m \"$\\(cat <<'EOF'\nfeat: migrate from raw psycopg to async SQLAlchemy + Alembic\n\n- Replace psycopg raw SQL with async SQLAlchemy ORM \\(AsyncSession, create_async_engine\\)\n- Add declarative models: User, EmailVerificationToken with relationships and partial index\n- Add Alembic migration system with initial migration for existing tables\n- Rewrite repository layer to use SQLAlchemy queries with session injection\n- Rewrite service layer to async with transaction management \\(commit in service\\)\n- Rewrite route handlers to async with Depends\\(get_session\\) DI\n- Replace deprecated @app.on_event\\(\"startup\"\\) with lifespan context manager\n- Update Dockerfile to run alembic upgrade head before uvicorn\n- Add .gitignore for Python, Node.js, IDE, env files\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\" 2>&1)",
+      "Bash(git push origin main 2>&1)",
+      "Bash(wc -l /Users/alikhan/PycharmProjects/TestRus/backend/app/**/*.py 2>/dev/null | tail -1)",
+      "Bash(cd /Users/alikhan/PycharmProjects/TestRus/react-app && npm install recharts)",
+      "Bash(npm run build 2>&1)"
     ]
   }
 }

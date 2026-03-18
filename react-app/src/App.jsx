@@ -3,6 +3,12 @@ import { useAuth } from './context/AuthContext';
 import LandingPage from './pages/LandingPage';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import StudentDashboard from './pages/student/StudentDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
+
+function getHomeRoute(role) {
+  if (role === 'teacher') return '/teacher';
+  return '/student';
+}
 
 function ProtectedRoute({ children, role }) {
   const { user } = useAuth();
@@ -18,8 +24,9 @@ export default function App() {
     <Routes>
       <Route
         path="/login"
-        element={user ? <Navigate to={user.role === 'teacher' ? '/teacher' : '/student'} replace /> : <Navigate to="/" replace />}
+        element={user ? <Navigate to={getHomeRoute(user.role)} replace /> : <Navigate to="/" replace />}
       />
+      <Route path="/admin/*" element={<AdminDashboard />} />
       <Route
         path="/teacher/*"
         element={
@@ -38,11 +45,11 @@ export default function App() {
       />
       <Route
         path="/"
-        element={user ? <Navigate to={user.role === 'teacher' ? '/teacher' : '/student'} replace /> : <LandingPage />}
+        element={user ? <Navigate to={getHomeRoute(user.role)} replace /> : <LandingPage />}
       />
       <Route
         path="*"
-        element={<Navigate to={user ? (user.role === 'teacher' ? '/teacher' : '/student') : '/'} replace />}
+        element={<Navigate to={user ? getHomeRoute(user.role) : '/'} replace />}
       />
     </Routes>
   );

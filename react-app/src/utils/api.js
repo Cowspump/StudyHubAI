@@ -34,6 +34,40 @@ export async function apiRequest(path, options = {}) {
   return data;
 }
 
+function authHeaders() {
+  const token = JSON.parse(localStorage.getItem('auth_token') || 'null');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export const adminApi = {
+  getTeachers() {
+    return apiRequest('/api/admin/teachers', { headers: authHeaders() });
+  },
+  createTeacher(payload) {
+    return apiRequest('/api/admin/teachers', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    });
+  },
+  updateTeacher(id, payload) {
+    return apiRequest(`/api/admin/teachers/${id}`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify(payload),
+    });
+  },
+  deleteTeacher(id) {
+    return apiRequest(`/api/admin/teachers/${id}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+  },
+  getStats() {
+    return apiRequest('/api/admin/stats', { headers: authHeaders() });
+  },
+};
+
 export const authApi = {
   register(payload) {
     return apiRequest('/api/auth/register', {
