@@ -1,61 +1,79 @@
-from app.db.session import db_conn
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.user import User
+from app.models.email_verification_token import EmailVerificationToken
 
 
-def find_user_by_email(email: str):
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT id, name, email, role, group_id, password_hash, is_verified FROM users WHERE email = %s", (email,))
-            return cur.fetchone()
+async def find_user_by_email(session: AsyncSession, email: str) -> User | None:
+    result = await session.execute(
+        select(User).where(User.email == email)
+    )
+    return result.scalar_one_or_none()
 
 
-def create_user(name: str, email: str, password_hash: str, role: str, group_id: str | None):
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO users (name, email, password_hash, role, group_id)
-                VALUES (%s, %s, %s, %s, %s)
-                RETURNING id, name, email, role, group_id, is_verified, created_at
-                """,
-                (name, email, password_hash, role, group_id),
-            )
-            row = cur.fetchone()
-        conn.commit()
-        return row
+async def create_user(
+    session: AsyncSession,
+    name: str,
+    email: str,
+    password_hash: str,
+    role: str,
+    group_id: str | None,
+) -> User:
+    user = User(
+        name=name,
+        email=email,
+        password_hash=password_hash,
+        role=role,
+        group_id=group_id,
+    )
+    session.add(user)
+    await session.flush()
+    return user
 
 
-def store_verification_code(user_id: int, code: str):
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO email_verification_tokens (user_id, token, expires_at)
-                VALUES (%s, %s, NOW() + INTERVAL '15 minutes')
-                """,
-                (user_id, code),
-            )
-        conn.commit()
+async def store_verification_code(session: AsyncSession, user_id: int, code: str) -> None:
+    token = EmailVerificationToken(
+        user_id=user_id,
+        token=code,
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
+    )
+    session.add(token)
+    await session.flush()
 
 
-def find_active_verification_code(user_id: int, code: str):
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, user_id
-                FROM email_verification_tokens
-                WHERE user_id = %s AND token = %s AND used = false AND expires_at > NOW()
-                ORDER BY created_at DESC
-                LIMIT 1
-                """,
-                (user_id, code),
-            )
-            return cur.fetchone()
+async def find_active_verification_code(
+    session: AsyncSession, user_id: int, code: str
+) -> EmailVerificationToken | None:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(EmailVerificationToken)
+        .where(
+            EmailVerificationToken.user_id == user_id,
+            EmailVerificationToken.token == code,
+            EmailVerificationToken.used == False,
+            EmailVerificationToken.expires_at > now,
+        )
+        .order_by(EmailVerificationToken.created_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
 
 
-def mark_user_verified(user_id: int):
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute("UPDATE users SET is_verified = true, email_verified_at = NOW() WHERE id = %s", (user_id,))
-            cur.execute("UPDATE email_verification_tokens SET used = true WHERE user_id = %s AND used = false", (user_id,))
-        conn.commit()
+async def mark_user_verified(session: AsyncSession, user_id: int) -> None:
+    now = datetime.now(timezone.utc)
+    await session.execute(
+        update(User)
+        .where(User.id == user_id)
+        .values(is_verified=True, email_verified_at=now)
+    )
+    await session.execute(
+        update(EmailVerificationToken)
+        .where(
+            EmailVerificationToken.user_id == user_id,
+            EmailVerificationToken.used == False,
+        )
+        .values(used=True)
+    )

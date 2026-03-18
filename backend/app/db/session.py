@@ -1,22 +1,19 @@
-from psycopg import connect
-from psycopg.rows import dict_row
+from collections.abc import AsyncGenerator
+
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
 
-
-def db_conn():
-    return connect(
-        host=settings.pghost,
-        port=settings.pgport,
-        dbname=settings.pgdatabase,
-        user=settings.pguser,
-        password=settings.pgpassword,
-        row_factory=dict_row,
-    )
+engine = create_async_engine(settings.database_url, echo=False, pool_size=5, max_overflow=10)
+async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-def check_db_health() -> None:
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT 1")
-            cur.fetchone()
+async def get_session() -> AsyncGenerator[AsyncSession]:
+    async with async_session_maker() as session:
+        yield session
+
+
+async def check_db_health() -> None:
+    async with engine.begin() as conn:
+        await conn.execute(text("SELECT 1"))

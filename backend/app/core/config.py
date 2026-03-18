@@ -28,6 +28,8 @@ class Settings:
     smtp_pass: str
     smtp_from: str
 
+    database_url: str
+
 
 settings = Settings(
     app_name="StudyHubAI Backend",
@@ -46,4 +48,10 @@ settings = Settings(
     smtp_user=os.getenv("SMTP_USER", ""),
     smtp_pass=os.getenv("SMTP_PASS", ""),
     smtp_from=os.getenv("SMTP_FROM", "StudyHubAI <noreply@example.com>"),
+    database_url=(
+        f"postgresql+asyncpg://"
+        f"{os.getenv('PGUSER', 'studyhubai')}:{os.getenv('PGPASSWORD', 'studyhubai_password')}"
+        f"@{os.getenv('PGHOST', 'localhost')}:{os.getenv('PGPORT', '5432')}"
+        f"/{os.getenv('PGDATABASE', 'studyhubai')}"
+    ),
 )

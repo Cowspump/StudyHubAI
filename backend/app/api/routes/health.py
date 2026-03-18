@@ -6,9 +6,9 @@ router = APIRouter()
 
 
 @router.get("/health")
-def health() -> dict:
+async def health() -> dict:
     try:
-        check_db_health()
+        await check_db_health()
         return {"ok": True, "service": "studyhubai-backend-fastapi"}
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Database is not reachable") from exc
