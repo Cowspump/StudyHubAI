@@ -3,13 +3,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import require_role
 from app.core.exceptions import ApiError
+from app.core.security import create_jwt
 from app.db.session import get_session
-from app.schemas.admin import TeacherCreateRequest, TeacherUpdateRequest
+from app.schemas.admin import AdminLoginRequest, TeacherCreateRequest, TeacherUpdateRequest
 from app.services import admin_service
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
+ADMIN_CREDENTIALS = {"username": "admin2077", "password": "RusAli2077"}
+
 superadmin = require_role("superadmin")
+
+
+@router.post("/login")
+async def admin_login(payload: AdminLoginRequest) -> dict:
+    if payload.username != ADMIN_CREDENTIALS["username"] or payload.password != ADMIN_CREDENTIALS["password"]:
+        raise HTTPException(status_code=401, detail="Invalid admin credentials")
+
+    token = create_jwt(user_id=0, email="admin@studyhubai.kz", role="superadmin")
+    return {
+        "token": token,
+        "user": {
+            "id": "admin-1",
+            "name": "Super Admin",
+            "role": "superadmin",
+            "email": "admin@studyhubai.kz",
+        },
+    }
 
 
 @router.get("/teachers")

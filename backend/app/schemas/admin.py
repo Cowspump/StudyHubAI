@@ -5,6 +5,11 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 
+class AdminLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 class TeacherCreateRequest(BaseModel):
     name: str
     email: EmailStr

@@ -32,7 +32,13 @@
       "Bash(git push origin main 2>&1)",
       "Bash(wc -l /Users/alikhan/PycharmProjects/TestRus/backend/app/**/*.py 2>/dev/null | tail -1)",
       "Bash(cd /Users/alikhan/PycharmProjects/TestRus/react-app && npm install recharts)",
-      "Bash(npm run build 2>&1)"
+      "Bash(npm run build 2>&1)",
+      "Bash(cd /Users/alikhan/PycharmProjects/TestRus/react-app && npm run build 2>&1 | tail -20)",
+      "Bash(cd /Users/alikhan/PycharmProjects/TestRus/backend && python -c \"from app.api.routes.admin import router; print\\('OK'\\)\" 2>&1)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4000/api/health 2>&1)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4000/health 2>&1)",
+      "Bash(curl -s -w \"\\\\n%{http_code}\" http://localhost:4000/api/admin/login -X POST -H \"Content-Type: application/json\" -d '{\"username\":\"admin2077\",\"password\":\"RusAli2077\"}' 2>&1)",
+      "Bash(tree -I 'node_modules|dist' /Users/alikhan/PycharmProjects/TestRus -L 3 2>/dev/null || find /Users/alikhan/PycharmProjects/TestRus -not -path '*/node_modules/*' -not -path '*/dist/*' -not -path '*/.git/*' -type f | head -150)"
     ]
   }
 }

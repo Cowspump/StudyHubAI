@@ -1,11 +1,7 @@
 import { useState } from 'react';
 import { useLang } from '../../context/LanguageContext';
+import { adminApi } from '../../utils/api';
 import '../../styles/admin.css';
-
-const ADMIN_CREDENTIALS = {
-  username: 'admin2077',
-  password: 'RusAli2077',
-};
 
 export default function AdminLogin({ onLogin }) {
   const { t } = useLang();
@@ -13,16 +9,14 @@ export default function AdminLogin({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      onLogin({
-        id: 'admin-1',
-        name: 'Super Admin',
-        role: 'superadmin',
-        email: 'admin@studyhubai.kz',
-      });
-    } else {
+    setError('');
+    try {
+      const data = await adminApi.login(username, password);
+      sessionStorage.setItem('admin_token', data.token);
+      onLogin(data.user);
+    } catch {
       setError(t('loginError'));
     }
   };

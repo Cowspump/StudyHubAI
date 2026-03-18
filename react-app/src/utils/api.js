@@ -13,12 +13,13 @@ async function parseResponse(res) {
 
 export async function apiRequest(path, options = {}) {
   const url = `${API_BASE_URL}${path}`;
+  const { headers: optHeaders, ...rest } = options;
   const res = await fetch(url, {
+    ...rest,
     headers: {
       'Content-Type': 'application/json',
-      ...(options.headers || {}),
+      ...(optHeaders || {}),
     },
-    ...options,
   });
 
   const data = await parseResponse(res);
@@ -39,32 +40,43 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function adminAuthHeaders() {
+  const token = sessionStorage.getItem('admin_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const adminApi = {
+  login(username, password) {
+    return apiRequest('/api/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+  },
   getTeachers() {
-    return apiRequest('/api/admin/teachers', { headers: authHeaders() });
+    return apiRequest('/api/admin/teachers', { headers: adminAuthHeaders() });
   },
   createTeacher(payload) {
     return apiRequest('/api/admin/teachers', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: adminAuthHeaders(),
       body: JSON.stringify(payload),
     });
   },
   updateTeacher(id, payload) {
     return apiRequest(`/api/admin/teachers/${id}`, {
       method: 'PUT',
-      headers: authHeaders(),
+      headers: adminAuthHeaders(),
       body: JSON.stringify(payload),
     });
   },
   deleteTeacher(id) {
     return apiRequest(`/api/admin/teachers/${id}`, {
       method: 'DELETE',
-      headers: authHeaders(),
+      headers: adminAuthHeaders(),
     });
   },
   getStats() {
-    return apiRequest('/api/admin/stats', { headers: authHeaders() });
+    return apiRequest('/api/admin/stats', { headers: adminAuthHeaders() });
   },
 };
 

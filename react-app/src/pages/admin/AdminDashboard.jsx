@@ -26,6 +26,7 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     sessionStorage.removeItem('admin_session');
+    sessionStorage.removeItem('admin_token');
     setAdmin(null);
   };
 
