@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import DB from '../utils/db';
+import { authApi } from '../utils/api';
 
 const AuthContext = createContext(null);
 
@@ -10,39 +11,50 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     DB.init();
     const saved = DB.get('currentUser');
-    if (saved) setUser(saved);
+    const token = DB.get('auth_token');
+    if (saved && token) setUser(saved);
     setLoading(false);
   }, []);
 
-  const login = useCallback((email, password) => {
-    const users = DB.get('users') || [];
-    const found = users.find((u) => u.email === email && u.password === password);
-    if (!found) return null;
-    DB.set('currentUser', found);
-    setUser(found);
-    return found;
+  const login = useCallback(async (email, password) => {
+    try {
+      const data = await authApi.login({ email, password });
+      DB.set('auth_token', data.token);
+      DB.set('currentUser', data.user);
+      setUser(data.user);
+      return { user: data.user };
+    } catch (err) {
+      return { error: err.message || 'Login failed' };
+    }
   }, []);
 
-  const register = useCallback((name, email, password, groupId) => {
-    const users = DB.get('users') || [];
-    if (users.find((u) => u.email === email)) return { error: 'Бұл email тіркелген' };
-    const newUser = {
-      id: 'stu-' + DB.generateId(),
-      email,
-      password,
-      name,
-      role: 'student',
-      groupId,
-    };
-    users.push(newUser);
-    DB.set('users', users);
-    DB.set('currentUser', newUser);
-    setUser(newUser);
-    return newUser;
+  const register = useCallback(async (name, email, password, groupId) => {
+    try {
+      await authApi.register({
+        name,
+        email,
+        password,
+        role: 'student',
+        groupId,
+      });
+      return { success: true };
+    } catch (err) {
+      return { error: err.message || 'Registration failed' };
+    }
+  }, []);
+
+  const verifyEmailCode = useCallback(async (email, code) => {
+    try {
+      await authApi.verifyEmailCode({ email, code });
+      return { success: true };
+    } catch (err) {
+      return { error: err.message || 'Verification failed' };
+    }
   }, []);
 
   const logout = useCallback(() => {
     DB.remove('currentUser');
+    DB.remove('auth_token');
     setUser(null);
   }, []);
 
@@ -58,7 +70,7 @@ export function AuthProvider({ children }) {
   if (loading) return null;
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, login, register, verifyEmailCode, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

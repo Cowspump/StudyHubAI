@@ -72,37 +72,71 @@ function AuthModal({ isOpen, onClose, initialTab }) {
   const [regPass, setRegPass] = useState('');
   const [regGroup, setRegGroup] = useState('');
   const [regError, setRegError] = useState('');
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verifyError, setVerifyError] = useState('');
+  const [verifyInfo, setVerifyInfo] = useState('');
 
-  const { login, register } = useAuth();
+  const { login, register, verifyEmailCode } = useAuth();
   const navigate = useNavigate();
   const groups = DB.get('groups') || [];
 
-  const handleLogin = (e) => {
+  const mapAuthError = (raw, fallback) => {
+    const msg = String(raw || '').toLowerCase();
+    if (msg.includes('not verified')) return t('authEmailNotVerified');
+    if (msg.includes('already registered')) return t('authEmailAlreadyRegistered');
+    if (msg.includes('invalid or expired verification code')) return t('authInvalidVerificationCode');
+    if (msg.includes('failed to fetch') || msg.includes('networkerror')) return t('authServerUnavailable');
+    return raw || fallback;
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const user = login(loginEmail, loginPass);
-    if (user) {
+    setLoginError('');
+    const res = await login(loginEmail, loginPass);
+    if (res?.user) {
       onClose();
-      navigate(user.role === 'teacher' ? '/teacher' : '/student');
+      navigate(res.user.role === 'teacher' ? '/teacher' : '/student');
     } else {
-      setLoginError(t('loginError'));
+      setLoginError(mapAuthError(res?.error, t('loginError')));
     }
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    const res = register(regName, regEmail, regPass, regGroup);
+    setRegError('');
+    setVerifyError('');
+    setVerifyInfo('');
+    const res = await register(regName, regEmail, regPass, regGroup);
     if (res?.error) {
-      setRegError(res.error);
+      setRegError(mapAuthError(res.error, t('loginError')));
     } else {
-      onClose();
-      navigate('/student');
+      setPendingVerificationEmail(regEmail);
+      setVerificationCode('');
+      setVerifyInfo(t('authRegisterCheckEmail'));
     }
+  };
+
+  const handleVerifyCode = async (e) => {
+    e.preventDefault();
+    setVerifyError('');
+    setVerifyInfo('');
+
+    const res = await verifyEmailCode(pendingVerificationEmail, verificationCode);
+    if (res?.error) {
+      setVerifyError(mapAuthError(res.error, t('authInvalidVerificationCode')));
+      return;
+    }
+
+    setVerifyInfo(t('authVerificationSuccess'));
   };
 
   const switchTab = (tab) => {
     setActiveTab(tab);
     setLoginError('');
     setRegError('');
+    setVerifyError('');
+    setVerifyInfo('');
   };
 
   return (
@@ -203,6 +237,24 @@ function AuthModal({ isOpen, onClose, initialTab }) {
                 </select>
                 <button type="submit" className="ld-btn ld-btn-primary ld-btn-full">{t('register')}</button>
                 {regError && <p className="ld-modal-error">{regError}</p>}
+
+                {pendingVerificationEmail && (
+                  <>
+                    <p className="ld-modal-hint">{verifyInfo || t('authRegisterCheckEmail')}</p>
+                    <input
+                      type="text"
+                      placeholder={t('authVerificationCodePlaceholder')}
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      required
+                    />
+                    <button type="button" className="ld-btn ld-btn-primary ld-btn-full" onClick={handleVerifyCode}>
+                      {t('authVerifyCode')}
+                    </button>
+                    {verifyError && <p className="ld-modal-error">{verifyError}</p>}
+                    {verifyInfo === t('authVerificationSuccess') && <p className="ld-modal-hint">{verifyInfo}</p>}
+                  </>
+                )}
               </form>
             )}
           </motion.div>
