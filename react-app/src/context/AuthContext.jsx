@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import DB from '../utils/db';
-import { authApi } from '../utils/api';
+import { authApi, setAuthToken, getAuthToken } from '../utils/api';
 
 const AuthContext = createContext(null);
 
@@ -9,34 +8,35 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    DB.init();
-    const saved = DB.get('currentUser');
-    const token = DB.get('auth_token');
-    if (saved && token) setUser(saved);
+    const saved = sessionStorage.getItem('current_user');
+    const token = getAuthToken();
+    if (saved && token) {
+      try {
+        setUser(JSON.parse(saved));
+      } catch { /* ignore */ }
+    }
     setLoading(false);
   }, []);
+
+  const persistUser = (userData) => {
+    sessionStorage.setItem('current_user', JSON.stringify(userData));
+    setUser(userData);
+  };
 
   const login = useCallback(async (email, password) => {
     try {
       const data = await authApi.login({ email, password });
-      DB.set('auth_token', data.token);
-      DB.set('currentUser', data.user);
-      setUser(data.user);
+      setAuthToken(data.token);
+      persistUser(data.user);
       return { user: data.user };
     } catch (err) {
       return { error: err.message || 'Login failed' };
     }
   }, []);
 
-  const register = useCallback(async (name, email, password, groupId) => {
+  const register = useCallback(async (name, email, password, group_id) => {
     try {
-      await authApi.register({
-        name,
-        email,
-        password,
-        role: 'student',
-        groupId,
-      });
+      await authApi.register({ name, email, password, role: 'student', group_id });
       return { success: true };
     } catch (err) {
       return { error: err.message || 'Registration failed' };
@@ -53,18 +53,13 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(() => {
-    DB.remove('currentUser');
-    DB.remove('auth_token');
+    setAuthToken(null);
+    sessionStorage.removeItem('current_user');
     setUser(null);
   }, []);
 
   const updateUser = useCallback((updatedData) => {
-    const users = DB.get('users') || [];
-    const idx = users.findIndex((u) => u.id === updatedData.id);
-    if (idx !== -1) users[idx] = { ...users[idx], ...updatedData };
-    DB.set('users', users);
-    DB.set('currentUser', updatedData);
-    setUser(updatedData);
+    persistUser(updatedData);
   }, []);
 
   if (loading) return null;

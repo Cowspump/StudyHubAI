@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
+import { teacherApi } from '../../utils/api';
 import MaterialModal from '../../components/MaterialModal';
 
 export default function TeacherMaterials() {
   const { t } = useLang();
-  const [materials, setMaterials] = useState(DB.get('materials') || []);
-  const groups = DB.get('groups') || [];
+  const [materials, setMaterials] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [topic, setTopic] = useState('');
   const [title, setTitle] = useState('');
   const [type, setType] = useState('pdf');
@@ -16,6 +16,19 @@ export default function TeacherMaterials() {
   const [previewMaterial, setPreviewMaterial] = useState(null);
 
   const typeIcon = { pdf: '📄', video: '🎬', link: '🔗', file: '📁' };
+
+  const loadData = useCallback(async () => {
+    try {
+      const [mats, grps] = await Promise.all([
+        teacherApi.getMaterials(),
+        teacherApi.getGroups(),
+      ]);
+      setMaterials(mats);
+      setGroups(grps);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const byTopic = {};
   materials.forEach((m) => {
@@ -29,16 +42,19 @@ export default function TeacherMaterials() {
     );
   };
 
-  const saveMaterial = (mType, mUrl, fileName) => {
-    const entry = {
-      id: 'm' + DB.generateId(),
-      topic, title, type: mType, url: mUrl, groupIds: selectedGroups,
-    };
-    if (fileName) entry.fileName = fileName;
-    const updated = [...materials, entry];
-    DB.set('materials', updated);
-    setMaterials(updated);
-    setTopic(''); setTitle(''); setUrl(''); setFile(null); setSelectedGroups([]);
+  const saveMaterial = async (mType, mUrl, fileName) => {
+    try {
+      await teacherApi.createMaterial({
+        topic,
+        title,
+        type: mType,
+        url: mUrl,
+        group_ids: selectedGroups,
+        file_name: fileName || null,
+      });
+      setTopic(''); setTitle(''); setUrl(''); setFile(null); setSelectedGroups([]);
+      loadData();
+    } catch { /* ignore */ }
   };
 
   const handleSubmit = (e) => {
@@ -53,10 +69,11 @@ export default function TeacherMaterials() {
     }
   };
 
-  const handleDelete = (id) => {
-    const updated = materials.filter((m) => m.id !== id);
-    DB.set('materials', updated);
-    setMaterials(updated);
+  const handleDelete = async (id) => {
+    try {
+      await teacherApi.deleteMaterial(id);
+      loadData();
+    } catch { /* ignore */ }
   };
 
   return (

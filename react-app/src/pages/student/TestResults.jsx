@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
+import { studentApi } from '../../utils/api';
 import { explainAnswer } from '../../utils/openai';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -10,25 +9,36 @@ const LETTERS = ['A', 'B', 'C', 'D'];
 export default function TestResults() {
   const { testId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { t } = useLang();
-  const test = (DB.get('tests') || []).find((ts) => ts.id === testId);
-  const results = DB.get('results') || [];
-  const myResult = results.filter((r) => r.testId === testId && r.userId === user.id).pop();
-
+  const [data, setData] = useState(null);
+  const [apiKey, setApiKey] = useState('');
   const [explanations, setExplanations] = useState({});
   const [loadingIdx, setLoadingIdx] = useState(null);
 
-  if (!test || !myResult?.answers) {
+  useEffect(() => {
+    async function load() {
+      try {
+        const [resultData, keyData] = await Promise.all([
+          studentApi.getTestResult(testId),
+          studentApi.getOpenaiKey(),
+        ]);
+        setData(resultData);
+        setApiKey(keyData.openai_key || '');
+      } catch { /* ignore */ }
+    }
+    load();
+  }, [testId]);
+
+  if (!data) {
     return (
       <div className="test-taking">
-        <p>{t('resultNotFound')}</p>
-        <button className="btn btn-primary" onClick={() => navigate('/student/tests')}>{t('backToTests')}</button>
+        <p>{t('loading')}</p>
       </div>
     );
   }
 
-  const { answers: userAnswers, score } = myResult;
+  const { test, result } = data;
+  const { answers: userAnswers, score } = result;
   const total = test.questions.length;
   const pct = Math.round((score / total) * 100);
   const color = pct >= 70 ? 'var(--success)' : pct >= 50 ? '#f59e0b' : 'var(--danger)';
@@ -37,10 +47,10 @@ export default function TestResults() {
     const q = test.questions[qIdx];
     setLoadingIdx(qIdx);
     try {
-      const explanation = await explainAnswer(q, userAnswers[qIdx], q.answer);
+      const explanation = await explainAnswer(q, userAnswers[qIdx], q.answer, apiKey);
       setExplanations((prev) => ({ ...prev, [qIdx]: explanation }));
     } catch (err) {
-      setExplanations((prev) => ({ ...prev, [qIdx]: `❌ Қате: ${err.message}` }));
+      setExplanations((prev) => ({ ...prev, [qIdx]: `Қате: ${err.message}` }));
     } finally {
       setLoadingIdx(null);
     }
@@ -100,7 +110,7 @@ export default function TestResults() {
                   <button
                     className="btn btn-sm"
                     onClick={() => handleExplain(i)}
-                    disabled={loadingIdx === i}
+                    disabled={loadingIdx === i || !apiKey}
                     style={{ background: '#8b5cf6', color: '#fff' }}
                   >
                     {loadingIdx === i ? t('aiThinking') : t('aiExplain')}

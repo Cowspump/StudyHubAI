@@ -1,20 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
+import { studentApi } from '../../utils/api';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
 export default function TakeTest() {
   const { testId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { t } = useLang();
-  const test = (DB.get('tests') || []).find((ts) => ts.id === testId);
+  const [test, setTest] = useState(null);
   const [answers, setAnswers] = useState({});
 
-  if (!test) return <p>{t('testNotFound')}</p>;
+  useEffect(() => {
+    studentApi.getTest(testId).then(setTest).catch(() => setTest(null));
+  }, [testId]);
+
+  if (!test) return <p>{t('loading')}</p>;
 
   const total = test.questions.length;
   const answeredCount = Object.keys(answers).length;
@@ -23,23 +25,17 @@ export default function TakeTest() {
     setAnswers({ ...answers, [qIdx]: optIdx });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    let score = 0;
     const answerArray = [];
-    test.questions.forEach((q, i) => {
-      const userAnswer = answers[i] ?? -1;
-      if (userAnswer === q.answer) score++;
-      answerArray.push(userAnswer);
+    test.questions.forEach((_, i) => {
+      answerArray.push(answers[i] ?? -1);
     });
 
-    const results = DB.get('results') || [];
-    results.push({
-      testId, userId: user.id, score, total: test.questions.length,
-      date: Date.now(), answers: answerArray,
-    });
-    DB.set('results', results);
-    navigate(`/student/tests/results/${testId}`);
+    try {
+      await studentApi.submitTest(testId, answerArray);
+      navigate(`/student/tests/results/${testId}`);
+    } catch { /* ignore */ }
   };
 
   return (

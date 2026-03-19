@@ -20,7 +20,7 @@ async def create_user(
     email: str,
     password_hash: str,
     role: str,
-    group_id: str | None,
+    group_id: int | None,
 ) -> User:
     user = User(
         name=name,

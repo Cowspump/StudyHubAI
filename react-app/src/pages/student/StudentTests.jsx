@@ -1,14 +1,27 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
+import { studentApi } from '../../utils/api';
 
 export default function StudentTests() {
-  const { user } = useAuth();
   const { t } = useLang();
   const navigate = useNavigate();
-  const tests = (DB.get('tests') || []).filter((ts) => ts.groupIds.includes(user.groupId));
-  const results = (DB.get('results') || []).filter((r) => r.userId === user.id);
+  const [tests, setTests] = useState([]);
+  const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [testsData, resultsData] = await Promise.all([
+          studentApi.getTests(),
+          studentApi.getResults(),
+        ]);
+        setTests(testsData);
+        setResults(resultsData);
+      } catch { /* ignore */ }
+    }
+    load();
+  }, []);
 
   return (
     <div className="tests-section">
@@ -17,11 +30,11 @@ export default function StudentTests() {
       {tests.length === 0 && <p className="empty-state">{t('noTestsForGroup')}</p>}
 
       {tests.map((ts) => {
-        const myResult = results.find((r) => r.testId === ts.id);
+        const myResult = ts.result;
         return (
           <div className="card" key={ts.id}>
             <h4>{ts.title}</h4>
-            <p>{ts.questions.length} {t('questionWord')}</p>
+            <p>{ts.question_count} {t('questionWord')}</p>
             {myResult ? (
               <>
                 <p className="score">
@@ -44,16 +57,13 @@ export default function StudentTests() {
         <>
           <h3>{t('resultsHistory')}</h3>
           <div className="results-grid">
-            {results.map((r, i) => {
-              const test = (DB.get('tests') || []).find((ts) => ts.id === r.testId);
-              return (
-                <div className="card result-card" key={i}>
-                  <strong>{test?.title || t('testDeleted')}</strong>
-                  <span className="score">{r.score}/{r.total}</span>
-                  <span className="date">{new Date(r.date).toLocaleDateString('kk')}</span>
-                </div>
-              );
-            })}
+            {results.map((r) => (
+              <div className="card result-card" key={r.id}>
+                <strong>{r.test_title}</strong>
+                <span className="score">{r.score}/{r.total}</span>
+                <span className="date">{new Date(r.created_at).toLocaleDateString('kk')}</span>
+              </div>
+            ))}
           </div>
         </>
       )}

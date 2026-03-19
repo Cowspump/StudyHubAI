@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { chatWithAI } from '../../utils/openai';
-import { getApiKey } from '../../utils/openai';
+import { studentApi } from '../../utils/api';
 import { useLang } from '../../context/LanguageContext';
 
 export default function StudentAI() {
@@ -8,9 +8,13 @@ export default function StudentAI() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [apiKey, setApiKey] = useState('');
   const chatRef = useRef(null);
   const historyRef = useRef([{ role: 'system', content: t('aiSystemPrompt') }]);
-  const hasKey = !!getApiKey();
+
+  useEffect(() => {
+    studentApi.getOpenaiKey().then((data) => setApiKey(data.openai_key || '')).catch(() => {});
+  }, []);
 
   useEffect(() => {
     chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
@@ -28,12 +32,11 @@ export default function StudentAI() {
     historyRef.current.push({ role: 'user', content: userMsg });
 
     try {
-      if (!getApiKey()) throw new Error(t('apiKeyNotSetShort'));
-      const response = await chatWithAI(historyRef.current);
+      if (!apiKey) throw new Error(t('apiKeyNotSetShort'));
+      const response = await chatWithAI(historyRef.current, apiKey);
       historyRef.current.push({ role: 'assistant', content: response });
       setMessages((prev) => [...prev, { role: 'bot', text: response }]);
 
-      // Keep history reasonable
       if (historyRef.current.length > 21) {
         historyRef.current = [historyRef.current[0], ...historyRef.current.slice(-20)];
       }
@@ -48,7 +51,7 @@ export default function StudentAI() {
     <div className="ai-section">
       <h2>{t('aiAssistant')}</h2>
 
-      {!hasKey && (
+      {!apiKey && (
         <div className="card" style={{ background: '#fef3c7', padding: 12, marginBottom: 12, borderRadius: 8 }}>
           {t('aiNoApiKey')}
         </div>
@@ -77,7 +80,7 @@ export default function StudentAI() {
             if (m.role === 'bot') {
               return (
                 <div key={i} className="message bot-message" style={{ background: '#f3f0ff', padding: 12, borderRadius: 12, maxWidth: '80%', alignSelf: 'flex-start', whiteSpace: 'pre-wrap' }}>
-                  🤖 {m.text}
+                  {m.text}
                 </div>
               );
             }

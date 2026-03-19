@@ -1,51 +1,69 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
-import { getApiKey, setApiKey } from '../../utils/openai';
+import { teacherApi } from '../../utils/api';
 
 export default function TeacherHome() {
   const { user, updateUser } = useAuth();
   const { t } = useLang();
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ ...user });
-  const [apiKey, setApiKeyState] = useState(getApiKey());
-  const [apiStatus, setApiStatus] = useState(getApiKey() ? t('apiKeySet') : t('apiKeyNotSet'));
+  const [profile, setProfile] = useState(null);
+  const [form, setForm] = useState({});
+  const [apiKey, setApiKeyState] = useState('');
+  const [apiStatus, setApiStatus] = useState('');
+  const [stats, setStats] = useState({ groups: 0, students: 0, tests: 0, results: 0 });
+  const [rating, setRating] = useState([]);
 
-  const groups = DB.get('groups') || [];
-  const users = DB.get('users') || [];
-  const students = users.filter((u) => u.role === 'student');
-  const tests = DB.get('tests') || [];
-  const results = DB.get('results') || [];
-
-  const handleSaveProfile = (e) => {
-    e.preventDefault();
-    updateUser(form);
-    setEditing(false);
-  };
-
-  const handleSaveApiKey = (e) => {
-    e.preventDefault();
-    setApiKey(apiKey);
-    if (apiKey) {
-      alert(t('apiKeySaved'));
-      setApiStatus(t('apiKeySet'));
-    } else {
-      alert(t('apiKeyRemoved'));
-      setApiStatus(t('apiKeyNotSet'));
+  useEffect(() => {
+    async function load() {
+      try {
+        const [profileData, statsData, ratingData, keyData] = await Promise.all([
+          teacherApi.getProfile(),
+          teacherApi.getStats(),
+          teacherApi.getRating(),
+          teacherApi.getApiKey(),
+        ]);
+        setProfile(profileData);
+        setForm(profileData);
+        setStats(statsData);
+        setRating(ratingData);
+        setApiKeyState(keyData.openai_key || '');
+        setApiStatus(keyData.openai_key ? t('apiKeySet') : t('apiKeyNotSet'));
+      } catch { /* ignore */ }
     }
+    load();
+  }, [t]);
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    try {
+      const updated = await teacherApi.updateProfile({
+        name: form.name,
+        position: form.position,
+        phone: form.phone,
+        telegram: form.telegram,
+        bio: form.bio,
+        photo: form.photo,
+      });
+      setProfile(updated);
+      updateUser({ ...user, name: updated.name, photo: updated.photo });
+      setEditing(false);
+    } catch { /* ignore */ }
   };
 
-  // Rating
-  const rating = students
-    .map((s) => {
-      const sr = results.filter((r) => r.userId === s.id);
-      const total = sr.length;
-      const avg = total > 0 ? Math.round(sr.reduce((sum, r) => sum + (r.score / r.total) * 100, 0) / total) : 0;
-      const group = groups.find((g) => g.id === s.groupId);
-      return { ...s, groupName: group?.name || t('noInfo'), testCount: total, avg };
-    })
-    .sort((a, b) => b.avg - a.avg || b.testCount - a.testCount);
+  const handleSaveApiKey = async (e) => {
+    e.preventDefault();
+    try {
+      await teacherApi.updateApiKey(apiKey);
+      if (apiKey) {
+        alert(t('apiKeySaved'));
+        setApiStatus(t('apiKeySet'));
+      } else {
+        alert(t('apiKeyRemoved'));
+        setApiStatus(t('apiKeyNotSet'));
+      }
+    } catch { /* ignore */ }
+  };
 
   const medal = (i) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`);
 
@@ -56,15 +74,17 @@ export default function TeacherHome() {
     return <span style={{ background: '#fef2f2', color: '#991b1b', padding: '2px 10px', borderRadius: 20, fontSize: '0.8rem', fontWeight: 600 }}>{t('levelNeedHelp')}</span>;
   };
 
+  if (!profile) return <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>{t('loading')}</p>;
+
   return (
     <>
       <h2>{t('teacherPanel')}</h2>
 
       <div className="stats-grid">
-        <div className="stat-card"><span className="stat-num">{groups.length}</span><span className="stat-label">{t('groups')}</span></div>
-        <div className="stat-card"><span className="stat-num">{students.length}</span><span className="stat-label">{t('students')}</span></div>
-        <div className="stat-card"><span className="stat-num">{tests.length}</span><span className="stat-label">{t('tests')}</span></div>
-        <div className="stat-card"><span className="stat-num">{results.length}</span><span className="stat-label">{t('results')}</span></div>
+        <div className="stat-card"><span className="stat-num">{stats.groups}</span><span className="stat-label">{t('groups')}</span></div>
+        <div className="stat-card"><span className="stat-num">{stats.students}</span><span className="stat-label">{t('students')}</span></div>
+        <div className="stat-card"><span className="stat-num">{stats.tests}</span><span className="stat-label">{t('tests')}</span></div>
+        <div className="stat-card"><span className="stat-num">{stats.results}</span><span className="stat-label">{t('results')}</span></div>
       </div>
 
       {/* Profile */}
@@ -81,18 +101,18 @@ export default function TeacherHome() {
         {!editing ? (
           <div className="profile-info">
             <img
-              src={user.photo || '/src/assets/placeholder.svg'}
+              src={profile.photo || '/src/assets/placeholder.svg'}
               className="avatar-lg"
               alt={t('photo')}
               style={{ width: 120, height: 150, objectFit: 'cover', borderRadius: 12 }}
             />
             <div>
-              <p><strong>{t('name')}:</strong> {user.name}</p>
-              <p><strong>{t('position')}:</strong> {user.position || t('noInfo')}</p>
-              <p><strong>{t('email')}:</strong> {user.email}</p>
-              <p><strong>{t('phone')}:</strong> {user.phone || t('noInfo')}</p>
-              <p><strong>{t('telegram')}:</strong> {user.telegram || t('noInfo')}</p>
-              <p><strong>{t('aboutMe')}:</strong> {user.bio || t('noInfo')}</p>
+              <p><strong>{t('name')}:</strong> {profile.name}</p>
+              <p><strong>{t('position')}:</strong> {profile.position || t('noInfo')}</p>
+              <p><strong>{t('email')}:</strong> {profile.email}</p>
+              <p><strong>{t('phone')}:</strong> {profile.phone || t('noInfo')}</p>
+              <p><strong>{t('telegram')}:</strong> {profile.telegram || t('noInfo')}</p>
+              <p><strong>{t('aboutMe')}:</strong> {profile.bio || t('noInfo')}</p>
             </div>
           </div>
         ) : (
@@ -116,11 +136,11 @@ export default function TeacherHome() {
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('name')}</label>
-                  <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                  <input value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
                   <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('position')}</label>
                   <input value={form.position || ''} onChange={(e) => setForm({ ...form, position: e.target.value })} />
                   <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('email')}</label>
-                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+                  <input type="email" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
                   <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('phone')}</label>
                   <input value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                   <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('telegram')}</label>
@@ -156,7 +176,7 @@ export default function TeacherHome() {
       </div>
 
       {/* Rating */}
-      {students.length > 0 && (
+      {rating.length > 0 && (
         <div className="card">
           <div className="card-header"><h3>{t('studentRating')}</h3></div>
           <div style={{ overflowX: 'auto' }}>
@@ -176,8 +196,8 @@ export default function TeacherHome() {
                   <tr key={s.id}>
                     <td style={{ textAlign: 'center', fontSize: '1.1rem' }}>{medal(i)}</td>
                     <td><strong>{s.name}</strong></td>
-                    <td>{s.groupName}</td>
-                    <td style={{ textAlign: 'center' }}>{s.testCount}</td>
+                    <td>{s.group_name}</td>
+                    <td style={{ textAlign: 'center' }}>{s.test_count}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div style={{ width: '100%', background: '#f1f5f9', borderRadius: 100, height: 8 }}>
@@ -189,7 +209,7 @@ export default function TeacherHome() {
                         <span style={{ fontWeight: 700, minWidth: 36 }}>{s.avg}%</span>
                       </div>
                     </td>
-                    <td>{statusBadge(s.avg, s.testCount)}</td>
+                    <td>{statusBadge(s.avg, s.test_count)}</td>
                   </tr>
                 ))}
               </tbody>

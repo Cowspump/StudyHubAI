@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLang } from '../../context/LanguageContext';
-import { adminApi } from '../../utils/api';
+import { adminApi, setAdminToken } from '../../utils/api';
 import '../../styles/admin.css';
 
 export default function AdminLogin({ onLogin }) {
@@ -14,7 +14,7 @@ export default function AdminLogin({ onLogin }) {
     setError('');
     try {
       const data = await adminApi.login(username, password);
-      sessionStorage.setItem('admin_token', data.token);
+      setAdminToken(data.token);
       onLogin(data.user);
     } catch {
       setError(t('loginError'));

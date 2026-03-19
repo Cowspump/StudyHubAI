@@ -1,73 +1,84 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
+import { teacherApi } from '../../utils/api';
 import { transliterate, generatePassword } from '../../utils/helpers';
 
 export default function TeacherGroups() {
   const { t } = useLang();
-  const [groups, setGroups] = useState(DB.get('groups') || []);
-  const [users, setUsers] = useState(DB.get('users') || []);
+  const [groups, setGroups] = useState([]);
+  const [studentsMap, setStudentsMap] = useState({});
   const [groupName, setGroupName] = useState('');
   const [bulkGroup, setBulkGroup] = useState('');
   const [bulkNames, setBulkNames] = useState('');
   const [createdAccounts, setCreatedAccounts] = useState([]);
   const [copyText, setCopyText] = useState(t('copyTable'));
 
-  const students = users.filter((u) => u.role === 'student');
+  const loadData = useCallback(async () => {
+    try {
+      const groupsData = await teacherApi.getGroups();
+      setGroups(groupsData);
+      const map = {};
+      for (const g of groupsData) {
+        map[g.id] = await teacherApi.getGroupStudents(g.id);
+      }
+      setStudentsMap(map);
+    } catch { /* ignore */ }
+  }, []);
 
-  const handleAddGroup = (e) => {
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const handleAddGroup = async (e) => {
     e.preventDefault();
-    const updated = [...groups, { id: 'g' + DB.generateId(), name: groupName, createdAt: Date.now() }];
-    DB.set('groups', updated);
-    setGroups(updated);
-    setGroupName('');
+    try {
+      await teacherApi.createGroup(groupName);
+      setGroupName('');
+      loadData();
+    } catch { /* ignore */ }
   };
 
-  const handleDeleteGroup = (id) => {
-    const updated = groups.filter((g) => g.id !== id);
-    DB.set('groups', updated);
-    setGroups(updated);
+  const handleDeleteGroup = async (id) => {
+    try {
+      await teacherApi.deleteGroup(id);
+      loadData();
+    } catch { /* ignore */ }
   };
 
-  const handleDeleteStudent = (id) => {
-    const updated = users.filter((u) => u.id !== id);
-    DB.set('users', updated);
-    setUsers(updated);
+  const handleDeleteStudent = async (id) => {
+    try {
+      await teacherApi.deleteStudent(id);
+      loadData();
+    } catch { /* ignore */ }
   };
 
-  const handleBulkAdd = (e) => {
+  const handleBulkAdd = async (e) => {
     e.preventDefault();
     if (!bulkGroup || !bulkNames.trim()) return;
 
     const names = bulkNames.split('\n').map((n) => n.trim()).filter((n) => n.length > 0);
     if (names.length === 0) return;
 
-    const updatedUsers = [...users];
-    const created = [];
+    const existingEmails = new Set();
+    Object.values(studentsMap).flat().forEach((s) => existingEmails.add(s.email));
 
-    names.forEach((name) => {
+    const students = names.map((name) => {
       const translitName = transliterate(name.split(/\s+/).slice(0, 2).join('.')).toLowerCase();
       let email = translitName + '@student.edu';
       let suffix = 1;
-      while (updatedUsers.find((u) => u.email === email)) {
+      while (existingEmails.has(email)) {
         email = translitName + suffix + '@student.edu';
         suffix++;
       }
+      existingEmails.add(email);
       const password = generatePassword();
-      const newUser = {
-        id: 'stu-' + DB.generateId(),
-        email, password, name,
-        role: 'student',
-        groupId: bulkGroup,
-      };
-      updatedUsers.push(newUser);
-      created.push({ name, email, password });
+      return { name, email, password };
     });
 
-    DB.set('users', updatedUsers);
-    setUsers(updatedUsers);
-    setCreatedAccounts(created);
-    setBulkNames('');
+    try {
+      const created = await teacherApi.bulkCreateStudents(parseInt(bulkGroup), students);
+      setCreatedAccounts(created);
+      setBulkNames('');
+      loadData();
+    } catch { /* ignore */ }
   };
 
   const handleCopy = () => {
@@ -142,7 +153,7 @@ export default function TeacherGroups() {
       </div>
 
       {groups.map((g) => {
-        const groupStudents = students.filter((s) => s.groupId === g.id);
+        const groupStudents = studentsMap[g.id] || [];
         return (
           <div className="card" key={g.id}>
             <div className="card-header">

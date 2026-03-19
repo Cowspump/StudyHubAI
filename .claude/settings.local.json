@@ -38,7 +38,17 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4000/api/health 2>&1)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:4000/health 2>&1)",
       "Bash(curl -s -w \"\\\\n%{http_code}\" http://localhost:4000/api/admin/login -X POST -H \"Content-Type: application/json\" -d '{\"username\":\"admin2077\",\"password\":\"RusAli2077\"}' 2>&1)",
-      "Bash(tree -I 'node_modules|dist' /Users/alikhan/PycharmProjects/TestRus -L 3 2>/dev/null || find /Users/alikhan/PycharmProjects/TestRus -not -path '*/node_modules/*' -not -path '*/dist/*' -not -path '*/.git/*' -type f | head -150)"
+      "Bash(tree -I 'node_modules|dist' /Users/alikhan/PycharmProjects/TestRus -L 3 2>/dev/null || find /Users/alikhan/PycharmProjects/TestRus -not -path '*/node_modules/*' -not -path '*/dist/*' -not -path '*/.git/*' -type f | head -150)",
+      "Bash(cd /Users/alikhan/PycharmProjects/TestRus/backend && python -c \"from app.api.router import api_router; print\\('OK'\\)\" 2>&1)",
+      "Bash(cd /Users/alikhan/PycharmProjects/TestRus/react-app && npx vite build 2>&1 | tail -20)",
+      "Bash(psql -h localhost -U postgres -c \"SELECT 1\" 2>&1 || psql -h localhost -d postgres -c \"SELECT current_user;\" 2>&1 || whoami)",
+      "Bash(psql -h localhost -U postgres <<'SQL'\n-- Drop database if exists\nDROP DATABASE IF EXISTS studyhubai;\n\n-- Drop and recreate role\nDROP ROLE IF EXISTS studyhubai;\nCREATE ROLE studyhubai WITH LOGIN PASSWORD 'studyhubai_password';\n\n-- Create fresh database\nCREATE DATABASE studyhubai OWNER studyhubai;\n\n-- Grant privileges\nGRANT ALL PRIVILEGES ON DATABASE studyhubai TO studyhubai;\nSQL)",
+      "Bash(psql -h localhost -U studyhubai -d studyhubai -c \"\\\\dt\" 2>&1)",
+      "Bash(source .venv/bin/activate 2>/dev/null && python -c \"from app.main import app; print\\('Backend imports OK'\\)\" 2>&1)",
+      "Bash(source .venv/bin/activate && python -c \"from app.main import app; print\\('Backend imports OK'\\)\" 2>&1)",
+      "Bash(/Users/alikhan/PycharmProjects/TestRus/.venv/bin/python -c \"from app.main import app; print\\('Backend imports OK'\\)\" 2>&1)",
+      "Bash(/Users/alikhan/PycharmProjects/TestRus/.venv/bin/python -m alembic upgrade head 2>&1)",
+      "Bash(find /Users/alikhan/PycharmProjects/TestRus/react-app -type f -name \"*.jsx\" -o -name \"*.js\" -o -name \"*.json\" | grep -E \"\\(package|tsconfig|jsconfig|\\\\.jsx?$\\)\" | head -50)"
     ]
   }
 }

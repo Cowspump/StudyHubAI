@@ -1,43 +1,29 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
+import { studentApi } from '../../utils/api';
 import { formatTime } from '../../utils/helpers';
 
 export default function StudentMessages() {
   const { user } = useAuth();
   const { t } = useLang();
   const [msgText, setMsgText] = useState('');
-  const [, forceUpdate] = useState(0);
+  const [teacher, setTeacher] = useState(null);
+  const [chatMsgs, setChatMsgs] = useState([]);
   const chatRef = useRef(null);
 
-  const users = DB.get('users') || [];
-  const teacher = users.find((u) => u.role === 'teacher');
+  const loadData = useCallback(async () => {
+    try {
+      const [teacherData, msgs] = await Promise.all([
+        studentApi.getTeacher(),
+        studentApi.getMessages(),
+      ]);
+      setTeacher(teacherData);
+      setChatMsgs(msgs);
+    } catch { /* ignore */ }
+  }, []);
 
-  const allMsgs = DB.get('messages') || [];
-  const chatMsgs = teacher
-    ? allMsgs
-        .filter(
-          (m) =>
-            (m.fromId === user.id && m.toId === teacher.id) ||
-            (m.fromId === teacher.id && m.toId === user.id)
-        )
-        .sort((a, b) => a.date - b.date)
-    : [];
-
-  // Mark read
-  useEffect(() => {
-    if (!teacher) return;
-    const messages = DB.get('messages') || [];
-    let changed = false;
-    messages.forEach((m) => {
-      if (m.fromId === teacher.id && m.toId === user.id && !m.read) {
-        m.read = true;
-        changed = true;
-      }
-    });
-    if (changed) DB.set('messages', messages);
-  }, [teacher, user.id]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   useEffect(() => {
     chatRef.current?.scrollTo(0, chatRef.current.scrollHeight);
@@ -45,21 +31,14 @@ export default function StudentMessages() {
 
   if (!teacher) return <p>{t('teacherNotFound')}</p>;
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!msgText.trim()) return;
-    const messages = DB.get('messages') || [];
-    messages.push({
-      id: 'msg' + DB.generateId(),
-      fromId: user.id,
-      toId: teacher.id,
-      text: msgText.trim(),
-      date: Date.now(),
-      read: false,
-    });
-    DB.set('messages', messages);
-    setMsgText('');
-    forceUpdate((n) => n + 1);
+    try {
+      await studentApi.sendMessage(teacher.id, msgText.trim());
+      setMsgText('');
+      loadData();
+    } catch { /* ignore */ }
   };
 
   return (
@@ -85,9 +64,9 @@ export default function StudentMessages() {
             </p>
           )}
           {chatMsgs.map((m) => (
-            <div key={m.id} className={`msg-bubble ${m.fromId === user.id ? 'msg-out' : 'msg-in'}`}>
+            <div key={m.id} className={`msg-bubble ${m.from_id === user.id ? 'msg-out' : 'msg-in'}`}>
               <div className="msg-text">{m.text}</div>
-              <div className="msg-time">{formatTime(m.date)}</div>
+              <div className="msg-time">{formatTime(new Date(m.created_at).getTime())}</div>
             </div>
           ))}
         </div>

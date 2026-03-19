@@ -1,14 +1,16 @@
-import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useState, useEffect } from 'react';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
+import { studentApi } from '../../utils/api';
 import MaterialModal from '../../components/MaterialModal';
 
 export default function StudentMaterials() {
-  const { user } = useAuth();
   const { t } = useLang();
-  const materials = (DB.get('materials') || []).filter((m) => m.groupIds.includes(user.groupId));
+  const [materials, setMaterials] = useState([]);
   const [previewMaterial, setPreviewMaterial] = useState(null);
+
+  useEffect(() => {
+    studentApi.getMaterials().then(setMaterials).catch(() => setMaterials([]));
+  }, []);
 
   const typeIcon = { pdf: '📄', video: '🎬', link: '🔗', file: '📁' };
 

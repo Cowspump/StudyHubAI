@@ -12,7 +12,7 @@ async def register_user(
     email: str,
     password: str,
     role: str,
-    group_id: str | None,
+    group_id: int | None,
 ):
     if not name or not password:
         raise ApiError(status_code=400, detail="name, email, password are required")
@@ -89,6 +89,6 @@ async def login_user(session: AsyncSession, email: str, password: str):
             "name": user.name,
             "email": user.email,
             "role": user.role,
-            "groupId": user.group_id,
+            "group_id": user.group_id,
         },
     }

@@ -2,26 +2,15 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LanguageContext';
 import { getInitials } from '../utils/helpers';
-import DB from '../utils/db';
 import LanguageSwitcher from './LanguageSwitcher';
 
-function getUnreadCount(userId) {
-  const msgs = DB.get('messages') || [];
-  return msgs.filter((m) => m.toId === userId && !m.read).length;
-}
-
-export default function Sidebar({ links, adminUser, onAdminLogout }) {
+export default function Sidebar({ links, adminUser, onAdminLogout, unreadCount = 0 }) {
   const auth = useAuth();
   const { t } = useLang();
 
-  // Admin mode — отдельная сессия, не зависит от AuthContext
   const isAdmin = !!adminUser;
   const user = isAdmin ? adminUser : auth.user;
   const handleLogout = isAdmin ? onAdminLogout : auth.logout;
-
-  const unread = isAdmin ? 0 : getUnreadCount(user.id);
-  const groups = DB.get('groups') || [];
-  const group = groups.find((g) => g.id === user.groupId);
 
   return (
     <aside className="sidebar">
@@ -38,7 +27,7 @@ export default function Sidebar({ links, adminUser, onAdminLogout }) {
         )}
         <h3>{user.name}</h3>
         <p className={`role-badge ${user.role === 'student' ? 'student-badge' : ''} ${user.role === 'superadmin' ? 'admin-badge' : ''}`}>
-          {user.role === 'superadmin' ? t('superadmin') : user.role === 'teacher' ? t('teacher') : group?.name || t('student')}
+          {user.role === 'superadmin' ? t('superadmin') : user.role === 'teacher' ? t('teacher') : user.group_name || t('student')}
         </p>
       </div>
 
@@ -53,7 +42,7 @@ export default function Sidebar({ links, adminUser, onAdminLogout }) {
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
             {link.label}
-            {link.showUnread && unread > 0 && (
+            {link.showUnread && unreadCount > 0 && (
               <span
                 style={{
                   background: 'var(--danger)',
@@ -64,7 +53,7 @@ export default function Sidebar({ links, adminUser, onAdminLogout }) {
                   marginLeft: 4,
                 }}
               >
-                {unread}
+                {unreadCount}
               </span>
             )}
           </NavLink>

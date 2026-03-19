@@ -1,21 +1,29 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
+import { studentApi } from '../../utils/api';
 
 export default function StudentHome() {
   const { user } = useAuth();
   const { t } = useLang();
-  const groups = DB.get('groups') || [];
-  const group = groups.find((g) => g.id === user.groupId);
-  const results = (DB.get('results') || []).filter((r) => r.userId === user.id);
-  const tests = (DB.get('tests') || []).filter((t) => t.groupIds.includes(user.groupId));
-  const avgScore =
-    results.length > 0
-      ? Math.round(results.reduce((s, r) => s + (r.score / r.total) * 100, 0) / results.length)
-      : 0;
+  const [profile, setProfile] = useState(null);
+  const [teacher, setTeacher] = useState(null);
 
-  const users = DB.get('users') || [];
-  const teacher = users.find((u) => u.role === 'teacher');
+  useEffect(() => {
+    async function load() {
+      try {
+        const [profileData, teacherData] = await Promise.all([
+          studentApi.getProfile(),
+          studentApi.getTeacher(),
+        ]);
+        setProfile(profileData);
+        setTeacher(teacherData);
+      } catch { /* ignore */ }
+    }
+    load();
+  }, []);
+
+  if (!profile) return <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>{t('loading')}</p>;
 
   return (
     <>
@@ -23,19 +31,19 @@ export default function StudentHome() {
 
       <div className="stats-grid">
         <div className="stat-card">
-          <span className="stat-num">{group?.name || '—'}</span>
+          <span className="stat-num">{profile.group_name || '—'}</span>
           <span className="stat-label">{t('group')}</span>
         </div>
         <div className="stat-card">
-          <span className="stat-num">{tests.length}</span>
+          <span className="stat-num">{profile.available_tests}</span>
           <span className="stat-label">{t('availableTests')}</span>
         </div>
         <div className="stat-card">
-          <span className="stat-num">{results.length}</span>
+          <span className="stat-num">{profile.submitted}</span>
           <span className="stat-label">{t('submitted')}</span>
         </div>
         <div className="stat-card">
-          <span className="stat-num">{avgScore}%</span>
+          <span className="stat-num">{profile.average}%</span>
           <span className="stat-label">{t('average')}</span>
         </div>
       </div>

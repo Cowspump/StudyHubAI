@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from '../../components/Sidebar';
 import { useLang } from '../../context/LanguageContext';
+import { setAdminToken } from '../../utils/api';
 import AdminLogin from './AdminLogin';
 import AdminHome from './AdminHome';
 import AdminTeachers from './AdminTeachers';
@@ -26,7 +27,7 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     sessionStorage.removeItem('admin_session');
-    sessionStorage.removeItem('admin_token');
+    setAdminToken(null);
     setAdmin(null);
   };
 

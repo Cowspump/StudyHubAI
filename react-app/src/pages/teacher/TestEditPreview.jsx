@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
+import { teacherApi } from '../../utils/api';
 
 export default function TestEditPreview() {
   const { testId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLang();
   const [title, setTitle] = useState('');
   const [groupIds, setGroupIds] = useState([]);
@@ -13,26 +14,22 @@ export default function TestEditPreview() {
 
   useEffect(() => {
     if (testId) {
-      // Editing existing test
-      const tests = DB.get('tests') || [];
-      const test = tests.find((t) => t.id === testId);
-      if (test) {
-        setTitle(test.title);
-        setGroupIds(test.groupIds);
-        setQuestions(test.questions);
-      }
-    } else {
-      // Preview from AI generation
-      const data = sessionStorage.getItem('previewTest');
-      if (data) {
-        const parsed = JSON.parse(data);
-        setTitle(parsed.title);
-        setGroupIds(parsed.groupIds);
-        setQuestions(parsed.questions);
-        sessionStorage.removeItem('previewTest');
-      }
+      // Editing existing test — load from API
+      teacherApi.getTests().then((tests) => {
+        const test = tests.find((t) => t.id === parseInt(testId));
+        if (test) {
+          setTitle(test.title);
+          setGroupIds(test.group_ids);
+          setQuestions(test.questions);
+        }
+      });
+    } else if (location.state) {
+      // Preview from AI generation — data passed via router state
+      setTitle(location.state.title);
+      setGroupIds(location.state.groupIds);
+      setQuestions(location.state.questions);
     }
-  }, [testId]);
+  }, [testId, location.state]);
 
   const updateQuestion = (idx, field, value) => {
     const updated = [...questions];
@@ -51,23 +48,18 @@ export default function TestEditPreview() {
     setQuestions(questions.filter((_, i) => i !== idx));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (questions.length === 0) return alert(t('atLeastOneQuestion'));
     if (!title.trim()) return alert(t('enterTestName'));
 
-    const tests = DB.get('tests') || [];
-
-    if (testId) {
-      const idx = tests.findIndex((t) => t.id === testId);
-      if (idx !== -1) {
-        tests[idx] = { ...tests[idx], title, groupIds, questions };
+    try {
+      if (testId) {
+        await teacherApi.updateTest(parseInt(testId), { title, group_ids: groupIds, questions });
+      } else {
+        await teacherApi.createTest({ title, group_ids: groupIds, questions });
       }
-    } else {
-      tests.push({ id: 't' + DB.generateId(), title, groupIds, questions });
-    }
-
-    DB.set('tests', tests);
-    navigate('/teacher/tests');
+      navigate('/teacher/tests');
+    } catch { /* ignore */ }
   };
 
   return (

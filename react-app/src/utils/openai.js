@@ -1,20 +1,15 @@
-import DB from './db';
 import * as pdfjsLib from 'pdfjs-dist';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
-export const getApiKey = () => DB.get('openai_key') || '';
-export const setApiKey = (key) => DB.set('openai_key', key);
-
-export async function chatWithAI(messages) {
-  const key = getApiKey();
-  if (!key) throw new Error('OpenAI API кілті орнатылмаған. Баптаулардан кілтті енгізіңіз.');
+export async function chatWithAI(messages, apiKey) {
+  if (!apiKey) throw new Error('OpenAI API кілті орнатылмаған. Баптаулардан кілтті енгізіңіз.');
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${key}`,
+      'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
@@ -39,7 +34,7 @@ export async function extractTextFromPDF(url) {
   return text.trim();
 }
 
-export async function generateTest(pdfUrl, numQuestions) {
+export async function generateTest(pdfUrl, numQuestions, apiKey) {
   const text = await extractTextFromPDF(pdfUrl);
   if (text.length < 50) throw new Error('PDF файлынан мәтін алу мүмкін болмады.');
 
@@ -67,7 +62,7 @@ ${trimmed}
 - Сұрақтар қазақ тілінде болсын
 - Тек JSON қайтар, басқа мәтін жазба`;
 
-  const response = await chatWithAI([{ role: 'user', content: prompt }]);
+  const response = await chatWithAI([{ role: 'user', content: prompt }], apiKey);
   const match = response.match(/\[[\s\S]*\]/);
   const json = match ? match[0] : response;
 
@@ -84,7 +79,7 @@ ${trimmed}
   }
 }
 
-export async function explainAnswer(question, userAnswer, correctAnswer) {
+export async function explainAnswer(question, userAnswer, correctAnswer, apiKey) {
   const prompt = `Студент тест тапсырып жатыр. Ол қате жауап берді. Оған неліктен жауабы қате екенін және дұрыс жауапты түсіндір.
 
 Сұрақ: ${question.q}
@@ -94,5 +89,5 @@ export async function explainAnswer(question, userAnswer, correctAnswer) {
 
 Қысқа және түсінікті түсіндір (3-5 сөйлем). Қазақ тілінде жаз.`;
 
-  return await chatWithAI([{ role: 'user', content: prompt }]);
+  return await chatWithAI([{ role: 'user', content: prompt }], apiKey);
 }

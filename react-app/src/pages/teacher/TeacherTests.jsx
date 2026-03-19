@@ -1,17 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLang } from '../../context/LanguageContext';
-import DB from '../../utils/db';
-import { getApiKey } from '../../utils/openai';
+import { teacherApi } from '../../utils/api';
 import { generateTest } from '../../utils/openai';
 
 export default function TeacherTests() {
   const navigate = useNavigate();
   const { t } = useLang();
-  const [tests, setTests] = useState(DB.get('tests') || []);
-  const groups = DB.get('groups') || [];
-  const results = DB.get('results') || [];
-  const materials = DB.get('materials') || [];
+  const [tests, setTests] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [resultsMap, setResultsMap] = useState({});
+  const [apiKey, setApiKey] = useState('');
 
   // Manual form
   const [testTitle, setTestTitle] = useState('');
@@ -25,6 +25,29 @@ export default function TeacherTests() {
   const [aiGroups, setAiGroups] = useState([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiStatus, setAiStatus] = useState('');
+
+  const loadData = useCallback(async () => {
+    try {
+      const [testsData, groupsData, matsData, keyData] = await Promise.all([
+        teacherApi.getTests(),
+        teacherApi.getGroups(),
+        teacherApi.getMaterials(),
+        teacherApi.getApiKey(),
+      ]);
+      setTests(testsData);
+      setGroups(groupsData);
+      setMaterials(matsData);
+      setApiKey(keyData.openai_key || '');
+
+      const rMap = {};
+      for (const tt of testsData) {
+        rMap[tt.id] = await teacherApi.getTestResults(tt.id);
+      }
+      setResultsMap(rMap);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const toggleGroup = (gid, setter, current) => {
     setter(current.includes(gid) ? current.filter((id) => id !== gid) : [...current, gid]);
@@ -45,42 +68,41 @@ export default function TeacherTests() {
     setQuestions(updated);
   };
 
-  const handleCreateTest = (e) => {
+  const handleCreateTest = async (e) => {
     e.preventDefault();
-    const allTests = DB.get('tests') || [];
-    allTests.push({ id: 't' + DB.generateId(), title: testTitle, groupIds: testGroups, questions });
-    DB.set('tests', allTests);
-    setTests(allTests);
-    setTestTitle('');
-    setTestGroups([]);
-    setQuestions([{ q: '', opts: ['', '', '', ''], answer: 0 }]);
+    try {
+      await teacherApi.createTest({ title: testTitle, group_ids: testGroups, questions });
+      setTestTitle('');
+      setTestGroups([]);
+      setQuestions([{ q: '', opts: ['', '', '', ''], answer: 0 }]);
+      loadData();
+    } catch { /* ignore */ }
   };
 
-  const handleDelete = (id) => {
-    const updated = tests.filter((t) => t.id !== id);
-    DB.set('tests', updated);
-    setTests(updated);
+  const handleDelete = async (id) => {
+    try {
+      await teacherApi.deleteTest(id);
+      loadData();
+    } catch { /* ignore */ }
   };
 
   const handleAiGenerate = async (e) => {
     e.preventDefault();
     if (!aiLecture) return alert(t('selectLectureWarn'));
     if (aiGroups.length === 0) return alert(t('selectGroupWarn'));
-    if (!getApiKey()) return alert(t('noApiKeyWarn'));
+    if (!apiKey) return alert(t('noApiKeyWarn'));
 
     setAiLoading(true);
     setAiStatus(t('aiGenerating'));
 
     try {
-      const generatedQuestions = await generateTest(aiLecture, aiNumQ);
-      const lecture = materials.find((m) => m.url === aiLecture);
-      const title = aiTitle || `${t('aiTestDefault')}`;
+      const generatedQuestions = await generateTest(aiLecture, aiNumQ, apiKey);
+      const title = aiTitle || t('aiTestDefault');
 
-      // Store in sessionStorage and navigate to preview
-      sessionStorage.setItem('previewTest', JSON.stringify({
-        title, groupIds: aiGroups, questions: generatedQuestions,
-      }));
-      navigate('/teacher/tests/preview');
+      // Pass data via state to preview page
+      navigate('/teacher/tests/preview', {
+        state: { title, groupIds: aiGroups, questions: generatedQuestions },
+      });
     } catch (err) {
       setAiStatus(`${t('errorPrefix')} ${err.message}`);
     } finally {
@@ -203,8 +225,7 @@ export default function TeacherTests() {
       {tests.length === 0 && <p className="empty-state">{t('noTests')}</p>}
 
       {tests.map((tt) => {
-        const testResults = results.filter((r) => r.testId === tt.id);
-        const users = DB.get('users') || [];
+        const testResults = resultsMap[tt.id] || [];
         return (
           <div className="card" key={tt.id}>
             <div className="card-header">
@@ -218,7 +239,7 @@ export default function TeacherTests() {
             </div>
             <p>
               {tt.questions.length} {t('questionsShort')}{' '}
-              {tt.groupIds.map((gid) => groups.find((g) => g.id === gid)?.name || gid).join(', ')}
+              {tt.group_ids.map((gid) => groups.find((g) => g.id === gid)?.name || gid).join(', ')}
             </p>
             {testResults.length > 0 ? (
               <details>
@@ -226,16 +247,13 @@ export default function TeacherTests() {
                 <table className="results-table">
                   <thead><tr><th>{t('student')}</th><th>{t('score')}</th><th>{t('date')}</th></tr></thead>
                   <tbody>
-                    {testResults.map((r, i) => {
-                      const stu = users.find((u) => u.id === r.userId);
-                      return (
-                        <tr key={i}>
-                          <td>{stu?.name || 'N/A'}</td>
-                          <td>{r.score}/{r.total}</td>
-                          <td>{new Date(r.date).toLocaleDateString('kk')}</td>
-                        </tr>
-                      );
-                    })}
+                    {testResults.map((r, i) => (
+                      <tr key={i}>
+                        <td>{r.user_name}</td>
+                        <td>{r.score}/{r.total}</td>
+                        <td>{new Date(r.created_at).toLocaleDateString('kk')}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </details>

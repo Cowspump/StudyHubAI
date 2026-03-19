@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-import DB from '../utils/db';
+import { publicApi } from '../utils/api';
 import {
   Brain, Users, FileVideo, HeadphonesIcon, UserCheck, BarChart3,
   Trophy, Monitor, ChevronRight, Menu, X, Mail, Github, Twitter,
@@ -79,7 +79,11 @@ function AuthModal({ isOpen, onClose, initialTab }) {
 
   const { login, register, verifyEmailCode } = useAuth();
   const navigate = useNavigate();
-  const groups = DB.get('groups') || [];
+  const [groups, setGroups] = useState([]);
+
+  useEffect(() => {
+    publicApi.getGroups().then(setGroups).catch(() => setGroups([]));
+  }, []);
 
   const mapAuthError = (raw, fallback) => {
     const msg = String(raw || '').toLowerCase();
